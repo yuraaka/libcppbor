@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "40c8f301_cc5f70f6",
+        "filename": "Android.bp",
+        "patchSetId": 1
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 1076971
+      },
+      "writtenOn": "2020-04-03T16:22:38Z",
+      "side": 1,
+      "message": "This name is already used in Identity Credential\u0027s copy of libcppbor, see hardware/interfaces/identity/support/Android.bp... I don\u0027t think merging the manifest - CL:1277873 - will work until this is fixed.",
+      "range": {
+        "startLine": 16,
+        "startChar": 11,
+        "endLine": 16,
+        "endChar": 21
+      },
+      "revId": "a7b145a6a5d05b89e9769ffea84d1068ef32bd4e",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": true
+    }
+  ]
+}
