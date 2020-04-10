@@ -1,0 +1,92 @@
+{
+  "comments": [
+    {
+      "robotId": "ayeaye",
+      "robotRunId": "AR00000000000002402179",
+      "url": "https://android-build.googleplex.com/builds/treetop/android-review/1284297?revision\u003d1",
+      "fixSuggestions": [
+        {
+          "fixId": "bdd09250_543e0101",
+          "description": "Change to \"include/cppbor/cppbor.h\"",
+          "replacements": [
+            {
+              "path": "include/cppbor/cppbor.h",
+              "range": {
+                "startLine": 89,
+                "startChar": 25,
+                "endLine": 89,
+                "endChar": 30
+              },
+              "replacement": "with"
+            }
+          ]
+        }
+      ],
+      "key": {
+        "uuid": "dd4362d7_49da94cb",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 1550585
+      },
+      "writtenOn": "2020-04-10T16:40:36Z",
+      "side": 1,
+      "message": "Common typo found: \"witht\" -- should it be \"with\"?\nNote: a line containing \"common_typos_disable\" or \"common_typos_enable\" will turn off or on (respectively) the linter for subsequent lines in the file. Alternatively include the token \"NOTYPO\" within a line to skip typo linting that line.",
+      "range": {
+        "startLine": 89,
+        "startChar": 25,
+        "endLine": 89,
+        "endChar": 30
+      },
+      "revId": "44c7881798ad58dfd08db3eb386d174c5e9c1f4b",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    },
+    {
+      "robotId": "ayeaye",
+      "robotRunId": "AR00000000000002402179",
+      "url": "https://android-build.googleplex.com/builds/treetop/android-review/1284297?revision\u003d1",
+      "fixSuggestions": [
+        {
+          "fixId": "00407194_29338d12",
+          "description": "Change to \"tests/cppbor_test.cpp\"",
+          "replacements": [
+            {
+              "path": "tests/cppbor_test.cpp",
+              "range": {
+                "startLine": 365,
+                "startChar": 18,
+                "endLine": 365,
+                "endChar": 27
+              },
+              "replacement": "explicitly"
+            }
+          ]
+        }
+      ],
+      "key": {
+        "uuid": "d3119801_0a51347d",
+        "filename": "tests/cppbor_test.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 1550585
+      },
+      "writtenOn": "2020-04-10T16:40:36Z",
+      "side": 1,
+      "message": "Common typo found: \"explicity\" -- should it be \"explicitly\"?\nNote: a line containing \"common_typos_disable\" or \"common_typos_enable\" will turn off or on (respectively) the linter for subsequent lines in the file. Alternatively include the token \"NOTYPO\" within a line to skip typo linting that line.",
+      "range": {
+        "startLine": 365,
+        "startChar": 18,
+        "endLine": 365,
+        "endChar": 27
+      },
+      "revId": "44c7881798ad58dfd08db3eb386d174c5e9c1f4b",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889",
+      "unresolved": false
+    }
+  ]
+}
