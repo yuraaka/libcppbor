@@ -1,0 +1,10 @@
+Lint-1: Lint 🤖 <android-build-prod-ayeaye@system.gserviceaccount.com>
+Lint+2: Max Bires <jbires@google.com>
+Autosubmit+1: Max Bires <jbires@google.com>
+Code-Review+2: David Zeuthen <zeuthen@google.com>
+Presubmit-Verified+1: Treehugger Robot <treehugger-gerrit@google.com>
+Submitted-by: Treehugger Robot <treehugger-gerrit@google.com>
+Submitted-at: Mon, 13 Apr 2020 21:05:25 +0000
+Reviewed-on: https://android-review.googlesource.com/c/platform/external/libcppbor/+/1284297
+Project: platform/external/libcppbor
+Branch: refs/heads/master
