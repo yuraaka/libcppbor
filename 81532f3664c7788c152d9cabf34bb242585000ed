@@ -1,0 +1,9 @@
+Autosubmit+1: Bob Badour <bbadour@google.com>
+Presubmit-Verified+1: Treehugger Robot <treehugger-gerrit@google.com>
+Lint+1: Lint 🤖 <android-build-prod-ayeaye@system.gserviceaccount.com>
+Code-Review+2: Elliott Hughes <enh@google.com>
+Submitted-by: Treehugger Robot <treehugger-gerrit@google.com>
+Submitted-at: Thu, 30 Apr 2020 22:25:50 +0000
+Reviewed-on: https://android-review.googlesource.com/c/platform/external/libcppbor/+/1298127
+Project: platform/external/libcppbor
+Branch: refs/heads/master
