@@ -16,11 +16,7 @@
 
 #include "cppbor_parse.h"
 
-#include <sstream>
 #include <stack>
-
-#define LOG_TAG "CppBor"
-#include <android-base/logging.h>
 
 namespace cppbor {
 
@@ -28,10 +24,9 @@ namespace {
 
 std::string insufficientLengthString(size_t bytesNeeded, size_t bytesAvail,
                                      const std::string& type) {
-    std::stringstream errStream;
-    errStream << "Need " << bytesNeeded << " byte(s) for " << type << ", have " << bytesAvail
-              << ".";
-    return errStream.str();
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "Need %zu byte(s) for %s, have %zu", bytesNeeded, type.c_str(), bytesAvail);
+    return std::string(buf);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_unsigned_v<T>>>

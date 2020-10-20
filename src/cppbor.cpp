@@ -16,9 +16,6 @@
 
 #include "cppbor.h"
 
-#define LOG_TAG "CppBor"
-#include <android-base/logging.h>
-
 namespace cppbor {
 
 namespace {
