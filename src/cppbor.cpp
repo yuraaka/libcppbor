@@ -16,8 +16,12 @@
 
 #include "cppbor.h"
 
-#define LOG_TAG "CppBor"
-#include <android-base/logging.h>
+#ifndef TRUSTY
+    #include <android-base/logging.h>
+    #define LOG_TAG "CppBor"
+#else
+    #define CHECK (void)
+#endif
 
 namespace cppbor {
 
