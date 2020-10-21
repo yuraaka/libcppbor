@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "1be52ebb_3d272d1a",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 5
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1363994
+      },
+      "writtenOn": "2020-10-21T11:22:12Z",
+      "side": 1,
+      "message": "As mentioned in the email thread, my understanding is that r.android.com/1468623 should be submitted separately before this CL, allowing the tests to run. Please let me know if that\u0027s not the case.",
+      "revId": "f04333a4b1f00ad29bc6828854ed17c34e78901b",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
