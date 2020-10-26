@@ -1,0 +1,8 @@
+Lint+1: Lint 🤖 <ayeaye-gerrit@google.com>
+Code-Review+2: Shawn Willden <swillden@google.com>
+Presubmit-Verified+1: Treehugger Robot <treehugger-gerrit@google.com>
+Submitted-by: Bram Bonné <brambonne@google.com>
+Submitted-at: Mon, 26 Oct 2020 13:37:12 +0000
+Reviewed-on: https://android-review.googlesource.com/c/platform/external/libcppbor/+/1466585
+Project: platform/external/libcppbor
+Branch: refs/heads/master
