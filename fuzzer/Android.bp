@@ -1,0 +1,10 @@
+cc_fuzz {
+    name: "cppbor_fuzzer",
+    srcs: [
+        "cppbor_fuzzer.cpp",
+    ],
+    shared_libs: [
+        "libcppbor_external",
+    ],
+    host_supported: true,
+}
