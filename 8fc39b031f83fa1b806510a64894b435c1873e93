@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "6baa9d0b_529393ac",
+        "filename": "fuzzer/cppbor_fuzzer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1353865
+      },
+      "writtenOn": "2020-11-11T22:41:26Z",
+      "side": 1,
+      "message": "That s a good point. Due to time constraint, and to make sure this is counted in fuzzathon, I will move this fuzzer under orphans. In parallel, I will send out a pr in upstream.",
+      "parentUuid": "eb1d5810_a6455bff",
+      "revId": "8fc39b031f83fa1b806510a64894b435c1873e93",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "0352372b_0c6c6486",
         "filename": "fuzzer/cppbor_fuzzer.cpp",
         "patchSetId": 1
@@ -31,6 +49,30 @@
       "writtenOn": "2020-11-11T17:02:54Z",
       "side": 1,
       "message": "tab should be spaces",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 30,
+        "endChar": 1
+      },
+      "revId": "8fc39b031f83fa1b806510a64894b435c1873e93",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "474c43c0_32eed6be",
+        "filename": "fuzzer/cppbor_fuzzer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1353865
+      },
+      "writtenOn": "2020-11-11T22:41:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0352372b_0c6c6486",
       "range": {
         "startLine": 30,
         "startChar": 0,
@@ -54,6 +96,30 @@
       "writtenOn": "2020-11-11T17:02:54Z",
       "side": 1,
       "message": "why not use the FuzzedDataProvider to make this string as well? Does \"key1\" and \"2\" have a special significance to cppbor?",
+      "range": {
+        "startLine": 32,
+        "startChar": 12,
+        "endLine": 32,
+        "endChar": 18
+      },
+      "revId": "8fc39b031f83fa1b806510a64894b435c1873e93",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b77e4ec6_5594794b",
+        "filename": "fuzzer/cppbor_fuzzer.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 1353865
+      },
+      "writtenOn": "2020-11-11T22:41:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d922aaf0_39c867eb",
       "range": {
         "startLine": 32,
         "startChar": 12,
