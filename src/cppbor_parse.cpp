@@ -19,10 +19,10 @@
 #include <stack>
 
 #ifndef __TRUSTY__
-    #include <android-base/logging.h>
-    #define LOG_TAG "CppBor"
+#include <android-base/logging.h>
+#define LOG_TAG "CppBor"
 #else
-    #define CHECK(x) (void)(x)
+#define CHECK(x) (void)(x)
 #endif
 
 namespace cppbor {
@@ -32,8 +32,8 @@ namespace {
 std::string insufficientLengthString(size_t bytesNeeded, size_t bytesAvail,
                                      const std::string& type) {
     char buf[1024];
-    snprintf(buf, sizeof(buf), "Need %zu byte(s) for %s, have %zu",
-             bytesNeeded, type.c_str(), bytesAvail);
+    snprintf(buf, sizeof(buf), "Need %zu byte(s) for %s, have %zu", bytesNeeded, type.c_str(),
+             bytesAvail);
     return std::string(buf);
 }
 
@@ -92,10 +92,9 @@ std::tuple<const uint8_t*, ParseClient*> handleNull(const uint8_t* hdrBegin, con
 }
 
 template <typename T>
-std::tuple<const uint8_t*, ParseClient*> handleString(uint64_t length, const uint8_t* hdrBegin,
-                                                      const uint8_t* valueBegin, const uint8_t* end,
-                                                      const std::string& errLabel,
-                                                      ParseClient* parseClient) {
+std::tuple<const uint8_t*, ParseClient*>
+handleString(uint64_t length, const uint8_t* hdrBegin, const uint8_t* valueBegin,
+             const uint8_t* end, const std::string& errLabel, ParseClient* parseClient) {
     if (end - valueBegin < static_cast<ssize_t>(length)) {
         parseClient->error(hdrBegin, insufficientLengthString(length, end - valueBegin, errLabel));
         return {hdrBegin, nullptr /* end parsing */};
@@ -168,23 +167,26 @@ std::tuple<const uint8_t*, ParseClient*> handleEntries(size_t entryCount, const 
             return {hdrBegin, nullptr /* end parsing */};
         }
         std::tie(pos, parseClient) = parseRecursively(pos, end, parseClient);
-        if (!parseClient) return {hdrBegin, nullptr};
+        if (!parseClient)
+            return {hdrBegin, nullptr};
     }
     return {pos, parseClient};
 }
 
-std::tuple<const uint8_t*, ParseClient*> handleCompound(
-        std::unique_ptr<Item> item, uint64_t entryCount, const uint8_t* hdrBegin,
-        const uint8_t* valueBegin, const uint8_t* end, const std::string& typeName,
-        ParseClient* parseClient) {
+std::tuple<const uint8_t*, ParseClient*>
+handleCompound(std::unique_ptr<Item> item, uint64_t entryCount, const uint8_t* hdrBegin,
+               const uint8_t* valueBegin, const uint8_t* end, const std::string& typeName,
+               ParseClient* parseClient) {
     parseClient =
-            parseClient->item(item, hdrBegin, valueBegin, valueBegin /* don't know the end yet */);
-    if (!parseClient) return {hdrBegin, nullptr};
+        parseClient->item(item, hdrBegin, valueBegin, valueBegin /* don't know the end yet */);
+    if (!parseClient)
+        return {hdrBegin, nullptr};
 
     const uint8_t* pos;
     std::tie(pos, parseClient) =
-            handleEntries(entryCount, hdrBegin, valueBegin, end, typeName, parseClient);
-    if (!parseClient) return {hdrBegin, nullptr};
+        handleEntries(entryCount, hdrBegin, valueBegin, end, typeName, parseClient);
+    if (!parseClient)
+        return {hdrBegin, nullptr};
 
     return {pos, parseClient->itemEnd(item, hdrBegin, valueBegin, pos)};
 }
@@ -203,63 +205,64 @@ std::tuple<const uint8_t*, ParseClient*> parseRecursively(const uint8_t* begin, 
         addlData = tagInt;
     } else {
         switch (tagInt) {
-            case ONE_BYTE_LENGTH:
-                std::tie(success, addlData, pos) = parseLength<uint8_t>(pos, end, parseClient);
-                break;
+        case ONE_BYTE_LENGTH:
+            std::tie(success, addlData, pos) = parseLength<uint8_t>(pos, end, parseClient);
+            break;
 
-            case TWO_BYTE_LENGTH:
-                std::tie(success, addlData, pos) = parseLength<uint16_t>(pos, end, parseClient);
-                break;
+        case TWO_BYTE_LENGTH:
+            std::tie(success, addlData, pos) = parseLength<uint16_t>(pos, end, parseClient);
+            break;
 
-            case FOUR_BYTE_LENGTH:
-                std::tie(success, addlData, pos) = parseLength<uint32_t>(pos, end, parseClient);
-                break;
+        case FOUR_BYTE_LENGTH:
+            std::tie(success, addlData, pos) = parseLength<uint32_t>(pos, end, parseClient);
+            break;
 
-            case EIGHT_BYTE_LENGTH:
-                std::tie(success, addlData, pos) = parseLength<uint64_t>(pos, end, parseClient);
-                break;
+        case EIGHT_BYTE_LENGTH:
+            std::tie(success, addlData, pos) = parseLength<uint64_t>(pos, end, parseClient);
+            break;
 
-            default:
-                CHECK(false);  //  It's impossible to get here
-                break;
+        default:
+            CHECK(false);  //  It's impossible to get here
+            break;
         }
     }
 
-    if (!success) return {begin, nullptr};
+    if (!success)
+        return {begin, nullptr};
 
     switch (type) {
-        case UINT:
-            return handleUint(addlData, begin, pos, parseClient);
+    case UINT:
+        return handleUint(addlData, begin, pos, parseClient);
 
-        case NINT:
-            return handleNint(addlData, begin, pos, parseClient);
+    case NINT:
+        return handleNint(addlData, begin, pos, parseClient);
 
-        case BSTR:
-            return handleString<Bstr>(addlData, begin, pos, end, "byte string", parseClient);
+    case BSTR:
+        return handleString<Bstr>(addlData, begin, pos, end, "byte string", parseClient);
 
-        case TSTR:
-            return handleString<Tstr>(addlData, begin, pos, end, "text string", parseClient);
+    case TSTR:
+        return handleString<Tstr>(addlData, begin, pos, end, "text string", parseClient);
 
-        case ARRAY:
-            return handleCompound(std::make_unique<IncompleteArray>(addlData), addlData, begin, pos,
-                                  end, "array", parseClient);
+    case ARRAY:
+        return handleCompound(std::make_unique<IncompleteArray>(addlData), addlData, begin, pos,
+                              end, "array", parseClient);
 
-        case MAP:
-            return handleCompound(std::make_unique<IncompleteMap>(addlData), addlData * 2, begin,
-                                  pos, end, "map", parseClient);
+    case MAP:
+        return handleCompound(std::make_unique<IncompleteMap>(addlData), addlData * 2, begin, pos,
+                              end, "map", parseClient);
 
-        case SEMANTIC:
-            return handleCompound(std::make_unique<IncompleteSemantic>(addlData), 1, begin, pos,
-                                  end, "semantic", parseClient);
+    case SEMANTIC:
+        return handleCompound(std::make_unique<IncompleteSemantic>(addlData), 1, begin, pos, end,
+                              "semantic", parseClient);
 
-        case SIMPLE:
-            switch (addlData) {
-                case TRUE:
-                case FALSE:
-                    return handleBool(addlData, begin, pos, parseClient);
-                case NULL_V:
-                    return handleNull(begin, pos, parseClient);
-            }
+    case SIMPLE:
+        switch (addlData) {
+        case TRUE:
+        case FALSE:
+            return handleBool(addlData, begin, pos, parseClient);
+        case NULL_V:
+            return handleNull(begin, pos, parseClient);
+        }
     }
     CHECK(false);  // Impossible to get here.
     return {};
@@ -277,12 +280,12 @@ class FullParseClient : public ParseClient {
         }
 
         if (item->isCompound()) {
-            // Starting a new compound data item, i.e. a new parent.  Save it on the parent stack.
-            // It's safe to save a raw pointer because the unique_ptr is guaranteed to stay in
-            // existence until the corresponding itemEnd() call.
-            #if __has_feature(cxx_rtti)
-                assert(dynamic_cast<CompoundItem*>(item.get()));
-            #endif
+// Starting a new compound data item, i.e. a new parent.  Save it on the parent stack.
+// It's safe to save a raw pointer because the unique_ptr is guaranteed to stay in
+// existence until the corresponding itemEnd() call.
+#if __has_feature(cxx_rtti)
+            assert(dynamic_cast<CompoundItem*>(item.get()));
+#endif
             mParentStack.push(static_cast<CompoundItem*>(item.get()));
             return this;
         } else {
@@ -321,9 +324,9 @@ class FullParseClient : public ParseClient {
   private:
     void appendToLastParent(std::unique_ptr<Item> item) {
         auto parent = mParentStack.top();
-        #if __has_feature(cxx_rtti)
-            assert(dynamic_cast<IncompleteItem*>(parent));
-        #endif
+#if __has_feature(cxx_rtti)
+        assert(dynamic_cast<IncompleteItem*>(parent));
+#endif
         if (parent->type() == ARRAY) {
             static_cast<IncompleteArray*>(parent)->add(std::move(item));
         } else if (parent->type() == MAP) {

@@ -90,9 +90,9 @@ void encodeHeader(MajorType type, uint64_t addlInfo, EncodeCallback encodeCallba
  * provided OutputIterator.
  */
 template <typename OutputIterator,
-          typename = std::enable_if_t<std::is_base_of_v<
-                  std::output_iterator_tag,
-                  typename std::iterator_traits<OutputIterator>::iterator_category>>>
+          typename = std::enable_if_t<
+              std::is_base_of_v<std::output_iterator_tag,
+                                typename std::iterator_traits<OutputIterator>::iterator_category>>>
 void encodeHeader(MajorType type, uint64_t addlInfo, OutputIterator iter) {
     return encodeHeader(type, addlInfo, [&](uint8_t v) { *iter++ = v; });
 }
@@ -432,16 +432,13 @@ class Array : public CompoundItem {
      * all of the types you'd expect and doest the things you'd expect (integral values are addes as
      * Uint or Nint, std::string and char* are added as Tstr, bools are added as Bool, etc.).
      */
-    template <typename... Args, typename Enable>
-    Array(Args&&... args);
+    template <typename... Args, typename Enable> Array(Args&&... args);
 
     /**
      * Append a single element to the Array, of any compatible type.
      */
-    template <typename T>
-    Array& add(T&& v) &;
-    template <typename T>
-    Array&& add(T&& v) &&;
+    template <typename T> Array& add(T&& v) &;
+    template <typename T> Array&& add(T&& v) &&;
 
     const std::unique_ptr<Item>& operator[](size_t index) const { return mEntries[index]; }
     std::unique_ptr<Item>& operator[](size_t index) { return mEntries[index]; }
@@ -478,27 +475,23 @@ class Map : public CompoundItem {
      * expect and doest the things you'd expect (integral values are addes as Uint or Nint,
      * std::string and char* are added as Tstr, bools are added as Bool, etc.).
      */
-    template <typename... Args, typename Enable>
-    Map(Args&&... args);
+    template <typename... Args, typename Enable> Map(Args&&... args);
 
     /**
      * Append a key/value pair to the Map, of any compatible types.
      */
-    template <typename Key, typename Value>
-    Map& add(Key&& key, Value&& value) &;
-    template <typename Key, typename Value>
-    Map&& add(Key&& key, Value&& value) &&;
+    template <typename Key, typename Value> Map& add(Key&& key, Value&& value) &;
+    template <typename Key, typename Value> Map&& add(Key&& key, Value&& value) &&;
 
     size_t size() const override {
         assertInvariant();
         return mEntries.size() / 2;
     }
 
-    template <typename Key, typename Enable>
-    std::pair<std::unique_ptr<Item>&, bool> get(Key key);
+    template <typename Key, typename Enable> std::pair<std::unique_ptr<Item>&, bool> get(Key key);
 
-    std::pair<const std::unique_ptr<Item>&, const std::unique_ptr<Item>&> operator[](
-            size_t index) const {
+    std::pair<const std::unique_ptr<Item>&, const std::unique_ptr<Item>&>
+    operator[](size_t index) const {
         assertInvariant();
         return {mEntries[index * 2], mEntries[index * 2 + 1]};
     }
@@ -523,8 +516,7 @@ class Semantic : public CompoundItem {
   public:
     static constexpr MajorType kMajorType = SEMANTIC;
 
-    template <typename T>
-    explicit Semantic(uint64_t value, T&& child);
+    template <typename T> explicit Semantic(uint64_t value, T&& child);
 
     Semantic(const Semantic& other) = delete;
     Semantic(Semantic&&) = default;
@@ -649,8 +641,7 @@ class Null : public Simple {
     virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Null>(); }
 };
 
-template <typename T>
-std::unique_ptr<T> downcastItem(std::unique_ptr<Item>&& v) {
+template <typename T> std::unique_ptr<T> downcastItem(std::unique_ptr<Item>&& v) {
     static_assert(std::is_base_of_v<Item, T> && !std::is_abstract_v<T>,
                   "returned type is not an Item or is an abstract class");
     if (v && T::kMajorType == v->type()) {
@@ -675,8 +666,8 @@ struct is_iterator_pair_over : public std::false_type {};
 
 template <typename I1, typename I2, typename V>
 struct is_iterator_pair_over<
-        std::pair<I1, I2>, V,
-        typename std::enable_if_t<std::is_same_v<V, typename std::iterator_traits<I1>::value_type>>>
+    std::pair<I1, I2>, V,
+    typename std::enable_if_t<std::is_same_v<V, typename std::iterator_traits<I1>::value_type>>>
     : public std::true_type {};
 
 template <typename T, typename V, typename Enable = void>
@@ -689,21 +680,20 @@ struct is_unique_ptr_of_subclass_of_v<T, std::unique_ptr<P>,
 
 /* check if type is one of std::string (1), std::string_view (2), null-terminated char* (3) or pair
  *     of iterators (4)*/
-template <typename T, typename Enable = void>
-struct is_text_type_v : public std::false_type {};
+template <typename T, typename Enable = void> struct is_text_type_v : public std::false_type {};
 
 template <typename T>
 struct is_text_type_v<
-        T, typename std::enable_if_t<
-                   /* case 1 */  //
-                   std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::string>
-                   /* case 2 */  //
-                   || std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::string_view>
-                   /* case 3 */                                                 //
-                   || std::is_same_v<std::remove_cv_t<std::decay_t<T>>, char*>  //
-                   || std::is_same_v<std::remove_cv_t<std::decay_t<T>>, const char*>
-                   /* case 4 */
-                   || details::is_iterator_pair_over<T, char>::value>> : public std::true_type {};
+    T, typename std::enable_if_t<
+           /* case 1 */  //
+           std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::string>
+           /* case 2 */  //
+           || std::is_same_v<std::remove_cv_t<std::remove_reference_t<T>>, std::string_view>
+           /* case 3 */                                                 //
+           || std::is_same_v<std::remove_cv_t<std::decay_t<T>>, char*>  //
+           || std::is_same_v<std::remove_cv_t<std::decay_t<T>>, const char*>
+           /* case 4 */
+           || details::is_iterator_pair_over<T, char>::value>> : public std::true_type {};
 
 /**
  * Construct a unique_ptr<Item> from many argument types. Accepts:
@@ -718,8 +708,7 @@ struct is_text_type_v<
  *     be moved if possible.  If provided by pointer, ownership is taken.
  * (f) null pointer;
  */
-template <typename T>
-std::unique_ptr<Item> makeItem(T v) {
+template <typename T> std::unique_ptr<Item> makeItem(T v) {
     Item* p = nullptr;
     if constexpr (/* case a */ std::is_same_v<T, bool>) {
         p = new Bool(v);
@@ -765,21 +754,19 @@ std::unique_ptr<Item> makeItem(T v) {
 
 template <typename... Args,
           /* Prevent use as copy ctor */ typename = std::enable_if_t<
-                  (sizeof...(Args)) != 1 ||
-                  !(std::is_same_v<Array, std::remove_cv_t<std::remove_reference_t<Args>>> || ...)>>
+              (sizeof...(Args)) != 1 ||
+              !(std::is_same_v<Array, std::remove_cv_t<std::remove_reference_t<Args>>> || ...)>>
 Array::Array(Args&&... args) {
     mEntries.reserve(sizeof...(args));
     (mEntries.push_back(details::makeItem(std::forward<Args>(args))), ...);
 }
 
-template <typename T>
-Array& Array::add(T&& v) & {
+template <typename T> Array& Array::add(T&& v) & {
     mEntries.push_back(details::makeItem(std::forward<T>(v)));
     return *this;
 }
 
-template <typename T>
-Array&& Array::add(T&& v) && {
+template <typename T> Array&& Array::add(T&& v) && {
     mEntries.push_back(details::makeItem(std::forward<T>(v)));
     return std::move(*this);
 }
@@ -792,15 +779,13 @@ Map::Map(Args&&... args) {
     (mEntries.push_back(details::makeItem(std::forward<Args>(args))), ...);
 }
 
-template <typename Key, typename Value>
-Map& Map::add(Key&& key, Value&& value) & {
+template <typename Key, typename Value> Map& Map::add(Key&& key, Value&& value) & {
     mEntries.push_back(details::makeItem(std::forward<Key>(key)));
     mEntries.push_back(details::makeItem(std::forward<Value>(value)));
     return *this;
 }
 
-template <typename Key, typename Value>
-Map&& Map::add(Key&& key, Value&& value) && {
+template <typename Key, typename Value> Map&& Map::add(Key&& key, Value&& value) && {
     this->add(std::forward<Key>(key), std::forward<Value>(value));
     return std::move(*this);
 }
@@ -818,8 +803,7 @@ std::pair<std::unique_ptr<Item>&, bool> Map::get(Key key) {
     return {keyItem, false};
 }
 
-template <typename T>
-Semantic::Semantic(uint64_t value, T&& child) : mValue(value) {
+template <typename T> Semantic::Semantic(uint64_t value, T&& child) : mValue(value) {
     mEntries.reserve(1);
     mEntries.push_back(details::makeItem(std::forward<T>(child)));
 }

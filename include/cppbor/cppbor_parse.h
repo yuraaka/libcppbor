@@ -62,9 +62,7 @@ inline ParseResult parse(const std::vector<uint8_t>& encoding) {
  * too large for the remining buffer, etc.) and the string contains an error message describing the
  * problem encountered.
  */
-inline ParseResult parse(const uint8_t* begin, size_t size) {
-    return parse(begin, begin + size);
-}
+inline ParseResult parse(const uint8_t* begin, size_t size) { return parse(begin, begin + size); }
 
 class ParseClient;
 
