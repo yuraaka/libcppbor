@@ -17,10 +17,10 @@
 #include "cppbor.h"
 
 #ifndef __TRUSTY__
-    #include <android-base/logging.h>
-    #define LOG_TAG "CppBor"
+#include <android-base/logging.h>
+#define LOG_TAG "CppBor"
 #else
-    #define CHECK(x) (void)(x)
+#define CHECK(x) (void)(x)
 #endif
 
 namespace cppbor {
@@ -57,6 +57,7 @@ size_t headerSize(uint64_t addlInfo) {
 uint8_t* encodeHeader(MajorType type, uint64_t addlInfo, uint8_t* pos, const uint8_t* end) {
     size_t sz = headerSize(addlInfo);
     if (end - pos < static_cast<ssize_t>(sz)) return nullptr;
+
     switch (sz) {
         case 1:
             *pos++ = type | static_cast<uint8_t>(addlInfo);
@@ -109,6 +110,7 @@ void encodeHeader(MajorType type, uint64_t addlInfo, EncodeCallback encodeCallba
 
 bool Item::operator==(const Item& other) const& {
     if (type() != other.type()) return false;
+
     switch (type()) {
         case UINT:
             return *asUint() == *(other.asUint());
@@ -153,6 +155,7 @@ bool Simple::operator==(const Simple& other) const& {
 uint8_t* Bstr::encode(uint8_t* pos, const uint8_t* end) const {
     pos = encodeHeader(mValue.size(), pos, end);
     if (!pos || end - pos < static_cast<ptrdiff_t>(mValue.size())) return nullptr;
+
     return std::copy(mValue.begin(), mValue.end(), pos);
 }
 
@@ -165,6 +168,7 @@ void Bstr::encodeValue(EncodeCallback encodeCallback) const {
 uint8_t* Tstr::encode(uint8_t* pos, const uint8_t* end) const {
     pos = encodeHeader(mValue.size(), pos, end);
     if (!pos || end - pos < static_cast<ptrdiff_t>(mValue.size())) return nullptr;
+
     return std::copy(mValue.begin(), mValue.end(), pos);
 }
 
