@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "abb7ffa8_be29f215",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 555,
+      "author": {
+        "id": 1363994
+      },
+      "writtenOn": "2020-11-23T10:19:28Z",
+      "side": 1,
+      "message": "With this method, all clients would need to ensure that child maps are canonicalized before they get added to a parent map, which could be error-prone (especially because it might be hard to catch all potential canonicalization errors in tests).\n\nI think having a convenience method that does recursive canonicalization + encoding would be useful, will make implementations depending on this less error-prone, and allows for easier incremental construction of multi-layer CBOR maps.\n\nSome more context in https://android-review.googlesource.com/c/platform/system/keymaster/+/1427230/comment/e56aaf28_ac731a3b/",
+      "range": {
+        "startLine": 554,
+        "startChar": 65,
+        "endLine": 555,
+        "endChar": 28
+      },
+      "revId": "4828b1d3bd68f981e1bd07aaf1969f18e976e899",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "43dd8a7c_911f7d9d",
+        "filename": "include/cppbor/cppbor_parse.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1363994
+      },
+      "writtenOn": "2020-11-23T10:19:28Z",
+      "side": 1,
+      "message": "nit: remaining",
+      "range": {
+        "startLine": 77,
+        "startChar": 21,
+        "endLine": 77,
+        "endChar": 29
+      },
+      "revId": "4828b1d3bd68f981e1bd07aaf1969f18e976e899",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
