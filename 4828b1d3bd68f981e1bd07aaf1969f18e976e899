@@ -24,6 +24,30 @@
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "22f66ef8_cb02806f",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 555,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2020-11-24T13:30:28Z",
+      "side": 1,
+      "message": "Good idea.  I\u0027ll add that in another CL.",
+      "parentUuid": "abb7ffa8_be29f215",
+      "range": {
+        "startLine": 554,
+        "startChar": 65,
+        "endLine": 555,
+        "endChar": 28
+      },
+      "revId": "4828b1d3bd68f981e1bd07aaf1969f18e976e899",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "43dd8a7c_911f7d9d",
@@ -37,6 +61,30 @@
       "writtenOn": "2020-11-23T10:19:28Z",
       "side": 1,
       "message": "nit: remaining",
+      "range": {
+        "startLine": 77,
+        "startChar": 21,
+        "endLine": 77,
+        "endChar": 29
+      },
+      "revId": "4828b1d3bd68f981e1bd07aaf1969f18e976e899",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ceac38ae_3057f6ab",
+        "filename": "include/cppbor/cppbor_parse.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2020-11-24T13:30:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "43dd8a7c_911f7d9d",
       "range": {
         "startLine": 77,
         "startChar": 21,
