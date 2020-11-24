@@ -1,0 +1,9 @@
+Presubmit-Verified-Together+1: Treehugger Robot <treehugger-gerrit@google.com>
+Lint+1: Lint 🤖 <ayeaye-gerrit@google.com>
+Autosubmit+1: Shawn Willden <swillden@google.com>
+Code-Review+2: Hasini Gunasinghe <hasinitg@google.com>
+Submitted-by: Treehugger Robot <treehugger-gerrit@google.com>
+Submitted-at: Tue, 24 Nov 2020 19:36:03 +0000
+Reviewed-on: https://android-review.googlesource.com/c/platform/external/libcppbor/+/1506865
+Project: platform/external/libcppbor
+Branch: refs/heads/master
