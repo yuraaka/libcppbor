@@ -16,6 +16,24 @@
       "message": "Long term it would be nice to have a replacable logging shim so this stuff shows up in `TLOGE`, but unbreaking the build for now is what\u0027s important.",
       "revId": "def2ca0f355d910036ef4aa83ff501e0ac582a8b",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "6cba422d_118affed",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2020-11-24T20:16:34Z",
+      "side": 1,
+      "message": "Agreed.",
+      "parentUuid": "a4210117_2fa06fc9",
+      "revId": "def2ca0f355d910036ef4aa83ff501e0ac582a8b",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
   ]
 }
