@@ -16,11 +16,14 @@
 
 #include "cppbor_parse.h"
 
-#include <sstream>
 #include <stack>
 
-#define LOG_TAG "CppBor"
+#ifndef __TRUSTY__
 #include <android-base/logging.h>
+#define LOG_TAG "CppBor"
+#else
+#define CHECK(x) (void)(x)
+#endif
 
 namespace cppbor {
 
@@ -28,10 +31,10 @@ namespace {
 
 std::string insufficientLengthString(size_t bytesNeeded, size_t bytesAvail,
                                      const std::string& type) {
-    std::stringstream errStream;
-    errStream << "Need " << bytesNeeded << " byte(s) for " << type << ", have " << bytesAvail
-              << ".";
-    return errStream.str();
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "Need %zu byte(s) for %s, have %zu.", bytesNeeded, type.c_str(),
+             bytesAvail);
+    return std::string(buf);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_unsigned_v<T>>>
@@ -277,7 +280,9 @@ class FullParseClient : public ParseClient {
             // Starting a new compound data item, i.e. a new parent.  Save it on the parent stack.
             // It's safe to save a raw pointer because the unique_ptr is guaranteed to stay in
             // existence until the corresponding itemEnd() call.
+#if __has_feature(cxx_rtti)
             assert(dynamic_cast<CompoundItem*>(item.get()));
+#endif
             mParentStack.push(static_cast<CompoundItem*>(item.get()));
             return this;
         } else {
@@ -316,7 +321,9 @@ class FullParseClient : public ParseClient {
   private:
     void appendToLastParent(std::unique_ptr<Item> item) {
         auto parent = mParentStack.top();
+#if __has_feature(cxx_rtti)
         assert(dynamic_cast<IncompleteItem*>(parent));
+#endif
         if (parent->type() == ARRAY) {
             static_cast<IncompleteArray*>(parent)->add(std::move(item));
         } else if (parent->type() == MAP) {
