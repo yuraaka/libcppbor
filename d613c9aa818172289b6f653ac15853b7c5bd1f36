@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4234aa24_ef6bc3ff",
+        "filename": "src/cppbor.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 1076971
+      },
+      "writtenOn": "2020-12-01T19:22:51Z",
+      "side": 1,
+      "message": "Looks like we\u0027re also fixing a bug? If so, then a) mention this in the commit message; and b) add a test.",
+      "range": {
+        "startLine": 410,
+        "startChar": 29,
+        "endLine": 410,
+        "endChar": 63
+      },
+      "revId": "d613c9aa818172289b6f653ac15853b7c5bd1f36",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
