@@ -22,6 +22,30 @@
       },
       "revId": "d613c9aa818172289b6f653ac15853b7c5bd1f36",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "9e0fe0f6_241d3261",
+        "filename": "src/cppbor.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 410,
+      "author": {
+        "id": 1076971
+      },
+      "writtenOn": "2020-12-01T19:32:49Z",
+      "side": 1,
+      "message": "Actually looks like we\u0027re not fixing a bug. Disregard.",
+      "parentUuid": "4234aa24_ef6bc3ff",
+      "range": {
+        "startLine": 410,
+        "startChar": 29,
+        "endLine": 410,
+        "endChar": 63
+      },
+      "revId": "d613c9aa818172289b6f653ac15853b7c5bd1f36",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
   ]
 }
