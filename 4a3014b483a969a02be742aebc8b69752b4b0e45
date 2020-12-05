@@ -24,6 +24,30 @@
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "41cf906f_bb70a720",
+        "filename": "src/cppbor.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 400,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2020-12-05T00:02:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9e103b2f_c53c1a56",
+      "range": {
+        "startLine": 400,
+        "startChar": 75,
+        "endLine": 400,
+        "endChar": 76
+      },
+      "revId": "4a3014b483a969a02be742aebc8b69752b4b0e45",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8443db62_60fe2d6d",
@@ -37,6 +61,30 @@
       "writtenOn": "2020-12-02T15:45:15Z",
       "side": 1,
       "message": "Could this method copy over the value of mCanonicalized as well?",
+      "range": {
+        "startLine": 486,
+        "startChar": 27,
+        "endLine": 486,
+        "endChar": 32
+      },
+      "revId": "4a3014b483a969a02be742aebc8b69752b4b0e45",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "724ca64e_a5cdfcba",
+        "filename": "src/cppbor.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 486,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2020-12-05T00:02:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8443db62_60fe2d6d",
       "range": {
         "startLine": 486,
         "startChar": 27,
