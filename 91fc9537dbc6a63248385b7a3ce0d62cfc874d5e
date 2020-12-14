@@ -41,6 +41,30 @@
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "586dd0ef_f2cb8234",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2020-12-14T17:02:47Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "01ed333d_938a05c1",
+      "range": {
+        "startLine": 156,
+        "startChar": 33,
+        "endLine": 156,
+        "endChar": 49
+      },
+      "revId": "91fc9537dbc6a63248385b7a3ce0d62cfc874d5e",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "aaabbfab_792ad2fb",
@@ -54,6 +78,30 @@
       "writtenOn": "2020-12-08T20:03:32Z",
       "side": 1,
       "message": "I\u0027ve seen both assert(false) and now CHECK(false) for unreachable code. Pick one?",
+      "range": {
+        "startLine": 335,
+        "startChar": 12,
+        "endLine": 335,
+        "endChar": 17
+      },
+      "revId": "91fc9537dbc6a63248385b7a3ce0d62cfc874d5e",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "311f5bbd_97dad911",
+        "filename": "src/cppbor_parse.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 335,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2020-12-14T17:02:47Z",
+      "side": 1,
+      "message": "I\u0027d prefer to always use CHECK, but I don\u0027t want to use the Android logging infrastructure in a header file, and cause conflicts on the definition of LOG_TAG.",
+      "parentUuid": "aaabbfab_792ad2fb",
       "range": {
         "startLine": 335,
         "startChar": 12,
