@@ -16,11 +16,14 @@
 
 #include "cppbor_parse.h"
 
-#include <sstream>
 #include <stack>
 
-#define LOG_TAG "CppBor"
+#ifndef __TRUSTY__
 #include <android-base/logging.h>
+#define LOG_TAG "CppBor"
+#else
+#define CHECK(x) (void)(x)
+#endif
 
 namespace cppbor {
 
@@ -28,10 +31,10 @@ namespace {
 
 std::string insufficientLengthString(size_t bytesNeeded, size_t bytesAvail,
                                      const std::string& type) {
-    std::stringstream errStream;
-    errStream << "Need " << bytesNeeded << " byte(s) for " << type << ", have " << bytesAvail
-              << ".";
-    return errStream.str();
+    char buf[1024];
+    snprintf(buf, sizeof(buf), "Need %zu byte(s) for %s, have %zu.", bytesNeeded, type.c_str(),
+             bytesAvail);
+    return std::string(buf);
 }
 
 template <typename T, typename = std::enable_if_t<std::is_unsigned_v<T>>>
@@ -111,7 +114,7 @@ class IncompleteItem {
 
 class IncompleteArray : public Array, public IncompleteItem {
   public:
-    IncompleteArray(size_t size) : mSize(size) {}
+    explicit IncompleteArray(size_t size) : mSize(size) {}
 
     // We return the "complete" size, rather than the actual size.
     size_t size() const override { return mSize; }
@@ -127,31 +130,33 @@ class IncompleteArray : public Array, public IncompleteItem {
 
 class IncompleteMap : public Map, public IncompleteItem {
   public:
-    IncompleteMap(size_t size) : mSize(size) {}
+    explicit IncompleteMap(size_t size) : mSize(size) {}
 
     // We return the "complete" size, rather than the actual size.
     size_t size() const override { return mSize; }
 
     void add(std::unique_ptr<Item> item) override {
-        mEntries.reserve(mSize * 2);
-        mEntries.push_back(std::move(item));
+        if (mKeyHeldForAdding) {
+            mEntries.reserve(mSize);
+            mEntries.push_back({std::move(mKeyHeldForAdding), std::move(item)});
+        } else {
+            mKeyHeldForAdding = std::move(item);
+        }
     }
 
   private:
+    std::unique_ptr<Item> mKeyHeldForAdding;
     size_t mSize;
 };
 
-class IncompleteSemantic : public Semantic, public IncompleteItem {
+class IncompleteSemanticTag : public SemanticTag, public IncompleteItem {
   public:
-    IncompleteSemantic(uint64_t value) : Semantic(value) {}
+    explicit IncompleteSemanticTag(uint64_t value) : SemanticTag(value) {}
 
     // We return the "complete" size, rather than the actual size.
     size_t size() const override { return 1; }
 
-    void add(std::unique_ptr<Item> item) override {
-        mEntries.reserve(1);
-        mEntries.push_back(std::move(item));
-    }
+    void add(std::unique_ptr<Item> item) override { mTaggedItem = std::move(item); }
 };
 
 std::tuple<const uint8_t*, ParseClient*> handleEntries(size_t entryCount, const uint8_t* hdrBegin,
@@ -246,7 +251,7 @@ std::tuple<const uint8_t*, ParseClient*> parseRecursively(const uint8_t* begin, 
                                   pos, end, "map", parseClient);
 
         case SEMANTIC:
-            return handleCompound(std::make_unique<IncompleteSemantic>(addlData), 1, begin, pos,
+            return handleCompound(std::make_unique<IncompleteSemanticTag>(addlData), 1, begin, pos,
                                   end, "semantic", parseClient);
 
         case SIMPLE:
@@ -277,8 +282,7 @@ class FullParseClient : public ParseClient {
             // Starting a new compound data item, i.e. a new parent.  Save it on the parent stack.
             // It's safe to save a raw pointer because the unique_ptr is guaranteed to stay in
             // existence until the corresponding itemEnd() call.
-            assert(dynamic_cast<CompoundItem*>(item.get()));
-            mParentStack.push(static_cast<CompoundItem*>(item.get()));
+            mParentStack.push(item.get());
             return this;
         } else {
             appendToLastParent(std::move(item));
@@ -316,20 +320,25 @@ class FullParseClient : public ParseClient {
   private:
     void appendToLastParent(std::unique_ptr<Item> item) {
         auto parent = mParentStack.top();
+#if __has_feature(cxx_rtti)
         assert(dynamic_cast<IncompleteItem*>(parent));
+#endif
+
+        IncompleteItem* parentItem{};
         if (parent->type() == ARRAY) {
-            static_cast<IncompleteArray*>(parent)->add(std::move(item));
+            parentItem = static_cast<IncompleteArray*>(parent);
         } else if (parent->type() == MAP) {
-            static_cast<IncompleteMap*>(parent)->add(std::move(item));
-        } else if (parent->type() == SEMANTIC) {
-            static_cast<IncompleteSemantic*>(parent)->add(std::move(item));
+            parentItem = static_cast<IncompleteMap*>(parent);
+        } else if (parent->asSemanticTag()) {
+            parentItem = static_cast<IncompleteSemanticTag*>(parent);
         } else {
             CHECK(false);  // Impossible to get here.
         }
+        parentItem->add(std::move(item));
     }
 
     std::unique_ptr<Item> mTheItem;
-    std::stack<CompoundItem*> mParentStack;
+    std::stack<Item*> mParentStack;
     const uint8_t* mPosition = nullptr;
     std::string mErrorMessage;
 };

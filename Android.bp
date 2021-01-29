@@ -12,8 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+cc_defaults {
+    name: "libcppbor_defaults",
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+}
+
 cc_library {
     name: "libcppbor_external",
+    defaults: [
+        "libcppbor_defaults",
+    ],
     vendor_available: true,
     host_supported: true,
     srcs: [
@@ -25,16 +37,20 @@ cc_library {
     ],
     shared_libs: [
         "libbase",
+        "libcrypto",
     ]
 }
 
 cc_test {
     name: "cppbor_test_external",
+    defaults: [
+        "libcppbor_defaults",
+    ],
     srcs: [
         "tests/cppbor_test.cpp"
     ],
     shared_libs: [
-        "libcppbor",
+        "libcppbor_external",
         "libbase",
     ],
     static_libs: [
@@ -45,11 +61,14 @@ cc_test {
 
 cc_test_host {
     name: "cppbor_host_test_external",
+    defaults: [
+        "libcppbor_defaults",
+    ],
     srcs: [
         "tests/cppbor_test.cpp"
     ],
     shared_libs: [
-        "libcppbor",
+        "libcppbor_external",
         "libbase",
     ],
     static_libs: [

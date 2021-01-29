@@ -140,7 +140,17 @@ TEST(SimpleValueTest, TextStringEncodings) {
 
 TEST(SimpleValueTest, SemanticTagEncoding) {
     EXPECT_EQ("\xDB\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x63\x41\x45\x53"s,
-              Semantic(std::numeric_limits<uint64_t>::max(), "AES").toString());
+              SemanticTag(std::numeric_limits<uint64_t>::max(), "AES").toString());
+}
+
+TEST(SimpleValueTest, NestedSemanticTagEncoding) {
+    auto tripleTagged =
+            SemanticTag(254,
+                        SemanticTag(1,                                                 //
+                                    SemanticTag(std::numeric_limits<uint64_t>::max(),  //
+                                                "AES")));
+    EXPECT_EQ("\xD8\xFE\xC1\xDB\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x63\x41\x45\x53"s,
+              tripleTagged.toString());
 }
 
 TEST(IsIteratorPairOverTest, All) {
@@ -176,7 +186,8 @@ TEST(IsUniquePtrSubclassOf, All) {
     EXPECT_TRUE((details::is_unique_ptr_of_subclass_of_v<Item, std::unique_ptr<Bool>>::value));
     EXPECT_TRUE((details::is_unique_ptr_of_subclass_of_v<Item, std::unique_ptr<Map>>::value));
     EXPECT_TRUE((details::is_unique_ptr_of_subclass_of_v<Item, std::unique_ptr<Array>>::value));
-    EXPECT_TRUE((details::is_unique_ptr_of_subclass_of_v<Item, std::unique_ptr<Semantic>>::value));
+    EXPECT_TRUE(
+            (details::is_unique_ptr_of_subclass_of_v<Item, std::unique_ptr<SemanticTag>>::value));
     EXPECT_FALSE(
             (details::is_unique_ptr_of_subclass_of_v<std::string, std::unique_ptr<Bool>>::value));
     EXPECT_FALSE((
@@ -416,7 +427,7 @@ TEST(EncodingMethodsTest, AllVariants) {
                                         .add("key_d", std::numeric_limits<int16_t>::min()))
                             .add("foo"))
             .add("key2", true)
-            .add("key3", Semantic(987654321, "Zhai gana test"));
+            .add("key3", SemanticTag(1, SemanticTag(987654321, "Zhai gana test")));
 
     std::vector<uint8_t> buf;
     buf.resize(map.encodedSize());
@@ -476,9 +487,9 @@ TEST(EncodingMethodsTest, MapWithTooShortBuf) {
     EXPECT_EQ(nullptr, map.encode(buf.data(), buf.data() + buf.size()));
 }
 
-TEST(EncodingMethodsTest, SemanticWithTooShortBuf) {
-    Semantic tag(4321, Array().add(Array().add("Qaiyrly kesh!").add("Kesh zharyq!").add("431"))
-                               .add(Map().add("kilt_1", 777).add("kilt_2", 999)));
+TEST(EncodingMethodsTest, SemanticTagWithTooShortBuf) {
+    SemanticTag tag(4321, Array().add(Array().add("Qaiyrly kesh!").add("Kesh zharyq!").add("431"))
+                                  .add(Map().add("kilt_1", 777).add("kilt_2", 999)));
     std::vector<uint8_t> buf(tag.encodedSize() - 1);
     EXPECT_EQ(nullptr, tag.encode(buf.data(), buf.data() + buf.size()));
 }
@@ -597,9 +608,24 @@ TEST(EqualityTest, Null) {
     EXPECT_NE(val, Map(99, 1, 99, 2));
 }
 
-TEST(EqualityTest, Semantic) {
-    Semantic val(215, Bstr("asd"));
-    EXPECT_EQ(val, Semantic(215, Bstr("asd")));
+TEST(EqualityTest, SemanticTag) {
+    SemanticTag val(215, Bstr("asd"));
+    EXPECT_EQ(val, SemanticTag(215, Bstr("asd")));
+
+    EXPECT_NE(val, Uint(99));
+    EXPECT_NE(val, Nint(-1));
+    EXPECT_NE(val, Nint(-4));
+    EXPECT_NE(val, Tstr("99"));
+    EXPECT_NE(val, Bstr("98"));
+    EXPECT_NE(val, Bool(true));
+    EXPECT_NE(val, Array(99, 1));
+    EXPECT_NE(val, Map(99, 2));
+    EXPECT_NE(val, Null());
+}
+
+TEST(EqualityTest, NestedSemanticTag) {
+    SemanticTag val(238238, SemanticTag(215, Bstr("asd")));
+    EXPECT_EQ(val, SemanticTag(238238, SemanticTag(215, Bstr("asd"))));
 
     EXPECT_NE(val, Uint(99));
     EXPECT_NE(val, Nint(-1));
@@ -731,21 +757,58 @@ TEST(ConvertTest, Array) {
     EXPECT_EQ(0U, item->asArray()->size());
 }
 
-TEST(ConvertTest, Semantic) {
-    unique_ptr<Item> item(new Semantic(1, "DSA"));
+TEST(ConvertTest, SemanticTag) {
+    unique_ptr<Item> item(new SemanticTag(10, "DSA"));
 
-    EXPECT_EQ(SEMANTIC, item->type());
+    EXPECT_EQ(TSTR, item->type());
     EXPECT_EQ(nullptr, item->asInt());
     EXPECT_EQ(nullptr, item->asUint());
     EXPECT_EQ(nullptr, item->asNint());
-    EXPECT_EQ(nullptr, item->asTstr());
     EXPECT_EQ(nullptr, item->asBstr());
     EXPECT_EQ(nullptr, item->asSimple());
     EXPECT_EQ(nullptr, item->asMap());
     EXPECT_EQ(nullptr, item->asArray());
-    EXPECT_NE(nullptr, item->asSemantic());
 
-    EXPECT_EQ(1U, item->asSemantic()->size());
+    // Both asTstr() (the contained type) and asSemanticTag() return non-null.
+    EXPECT_NE(nullptr, item->asTstr());
+    EXPECT_NE(nullptr, item->asSemanticTag());
+
+    // asTtr() and asSemanticTag() actually return different objects.
+    EXPECT_NE(static_cast<Item*>(item->asTstr()), static_cast<Item*>(item->asSemanticTag()));
+
+    EXPECT_EQ(1U, item->asSemanticTag()->size());
+    EXPECT_EQ("DSA", item->asTstr()->value());
+
+    EXPECT_EQ(1U, item->semanticTagCount());
+    EXPECT_EQ(10U, item->semanticTag());
+}
+
+TEST(ConvertTest, NestedSemanticTag) {
+    unique_ptr<Item> item(new SemanticTag(40, new SemanticTag(10, "DSA")));
+
+    EXPECT_EQ(TSTR, item->type());
+    EXPECT_EQ(nullptr, item->asInt());
+    EXPECT_EQ(nullptr, item->asUint());
+    EXPECT_EQ(nullptr, item->asNint());
+    EXPECT_EQ(nullptr, item->asBstr());
+    EXPECT_EQ(nullptr, item->asSimple());
+    EXPECT_EQ(nullptr, item->asMap());
+    EXPECT_EQ(nullptr, item->asArray());
+
+    // Both asTstr() (the contained type) and asSemanticTag() return non-null.
+    EXPECT_NE(nullptr, item->asTstr());
+    EXPECT_NE(nullptr, item->asSemanticTag());
+
+    // asTtr() and asSemanticTag() actually return different objects.  Note that there's no way to
+    // get a pointer to the "inner" SemanticTag object.  There shouldn't be any need to.
+    EXPECT_NE(static_cast<Item*>(item->asTstr()), static_cast<Item*>(item->asSemanticTag()));
+
+    EXPECT_EQ(1U, item->asSemanticTag()->size());
+    EXPECT_EQ("DSA", item->asTstr()->value());
+
+    EXPECT_EQ(2U, item->semanticTagCount());
+    EXPECT_EQ(10U, item->semanticTag(0));
+    EXPECT_EQ(40U, item->semanticTag(1));
 }
 
 TEST(ConvertTest, Null) {
@@ -772,7 +835,6 @@ TEST(CloningTest, Uint) {
     EXPECT_EQ(clone->type(), UINT);
     EXPECT_NE(clone->asUint(), nullptr);
     EXPECT_EQ(item, *clone->asUint());
-    std::move(item);
     EXPECT_EQ(*clone->asUint(), Uint(10));
 }
 
@@ -782,7 +844,6 @@ TEST(CloningTest, Nint) {
     EXPECT_EQ(clone->type(), NINT);
     EXPECT_NE(clone->asNint(), nullptr);
     EXPECT_EQ(item, *clone->asNint());
-    std::move(item);
     EXPECT_EQ(*clone->asNint(), Nint(-1000000));
 }
 
@@ -792,7 +853,6 @@ TEST(CloningTest, Tstr) {
     EXPECT_EQ(clone->type(), TSTR);
     EXPECT_NE(clone->asTstr(), nullptr);
     EXPECT_EQ(item, *clone->asTstr());
-    std::move(item);
     EXPECT_EQ(*clone->asTstr(), Tstr("qwertyasdfgh"));
 }
 
@@ -802,23 +862,18 @@ TEST(CloningTest, Bstr) {
     EXPECT_EQ(clone->type(), BSTR);
     EXPECT_NE(clone->asBstr(), nullptr);
     EXPECT_EQ(item, *clone->asBstr());
-    std::move(item);
     EXPECT_EQ(*clone->asBstr(), Bstr(std::vector<uint8_t>{1, 2, 3, 255, 0}));
 }
 
 TEST(CloningTest, Array) {
     Array item(-1000000, 22222222, "item", Map(1, 2, 4, Array(1, "das", true, nullptr)),
-               Semantic(16, "DATA")),
+               SemanticTag(16, "DATA")),
             copy(-1000000, 22222222, "item", Map(1, 2, 4, Array(1, "das", true, nullptr)),
-                 Semantic(16, "DATA"));
+                 SemanticTag(16, "DATA"));
     auto clone = item.clone();
     EXPECT_EQ(clone->type(), ARRAY);
     EXPECT_NE(clone->asArray(), nullptr);
     EXPECT_EQ(item, *clone->asArray());
-    std::move(item[0]);
-    std::move(item[1]);
-    std::move(item[3]);
-    std::move(item);
     EXPECT_EQ(*clone->asArray(), copy);
 }
 
@@ -829,10 +884,6 @@ TEST(CloningTest, Map) {
     EXPECT_EQ(clone->type(), MAP);
     EXPECT_NE(clone->asMap(), nullptr);
     EXPECT_EQ(item, *clone->asMap());
-    auto [key, value] = item[0];
-    std::move(key);
-    std::move(value);
-    std::move(item);
     EXPECT_EQ(*clone->asMap(), copy);
 }
 
@@ -844,7 +895,6 @@ TEST(CloningTest, Bool) {
     EXPECT_EQ(clone->asSimple()->simpleType(), BOOLEAN);
     EXPECT_NE(clone->asSimple()->asBool(), nullptr);
     EXPECT_EQ(item, *clone->asSimple()->asBool());
-    std::move(item);
     EXPECT_EQ(*clone->asSimple()->asBool(), Bool(true));
 }
 
@@ -856,19 +906,210 @@ TEST(CloningTest, Null) {
     EXPECT_EQ(clone->asSimple()->simpleType(), NULL_T);
     EXPECT_NE(clone->asSimple()->asNull(), nullptr);
     EXPECT_EQ(item, *clone->asSimple()->asNull());
-    std::move(item);
     EXPECT_EQ(*clone->asSimple()->asNull(), Null());
 }
 
-TEST(CloningTest, Semantic) {
-    Semantic item(96, Array(1, 2, 3, "entry", Map("key", "value"))),
-            copy(96, Array(1, 2, 3, "entry", Map("key", "value")));
+TEST(CloningTest, SemanticTag) {
+    SemanticTag item(96, Array(1, 2, 3, "entry", Map("key", "value")));
+    SemanticTag copy(96, Array(1, 2, 3, "entry", Map("key", "value")));
+
     auto clone = item.clone();
-    EXPECT_EQ(clone->type(), SEMANTIC);
-    EXPECT_NE(clone->asSemantic(), nullptr);
-    EXPECT_EQ(item, *clone->asSemantic());
-    std::move(item);
-    EXPECT_EQ(*clone->asSemantic(), copy);
+    EXPECT_EQ(clone->type(), ARRAY);
+    EXPECT_NE(clone->asSemanticTag(), nullptr);
+    EXPECT_EQ(item, *clone->asSemanticTag());
+    EXPECT_EQ(*clone->asSemanticTag(), copy);
+}
+
+TEST(CloningTest, NestedSemanticTag) {
+    SemanticTag item(20,                          //
+                     SemanticTag(30,              //
+                                 SemanticTag(96,  //
+                                             Array(1, 2, 3, "entry", Map("key", "value")))));
+    SemanticTag copy(20,                          //
+                     SemanticTag(30,              //
+                                 SemanticTag(96,  //
+                                             Array(1, 2, 3, "entry", Map("key", "value")))));
+
+    auto clone = item.clone();
+    EXPECT_EQ(clone->type(), ARRAY);
+    EXPECT_NE(clone->asSemanticTag(), nullptr);
+    EXPECT_EQ(item, *clone->asSemanticTag());
+    EXPECT_EQ(*clone->asSemanticTag(), copy);
+}
+
+TEST(PrettyPrintingTest, NestedSemanticTag) {
+    SemanticTag item(20,                          //
+                     SemanticTag(30,              //
+                                 SemanticTag(96,  //
+                                             Array(1, 2, 3, "entry", Map("key", "value")))));
+    EXPECT_EQ(prettyPrint(&item),
+              "tag 20 tag 30 tag 96 [\n"
+              "  1,\n"
+              "  2,\n"
+              "  3,\n"
+              "  'entry',\n"
+              "  {\n"
+              "    'key' : 'value',\n"
+              "  },\n"
+              "]");
+}
+
+TEST(MapCanonicalizationTest, CanonicalizationTest) {
+    Map map;
+    map.add("hello", 1)
+            .add("h", 1)
+            .add(1, 1)
+            .add(-4, 1)
+            .add(-5, 1)
+            .add(2, 1)
+            .add("hellp", 1)
+            .add(254, 1)
+            .add(27, 1);
+
+    EXPECT_EQ(prettyPrint(&map),
+              "{\n"
+              "  'hello' : 1,\n"
+              "  'h' : 1,\n"
+              "  1 : 1,\n"
+              "  -4 : 1,\n"
+              "  -5 : 1,\n"
+              "  2 : 1,\n"
+              "  'hellp' : 1,\n"
+              "  254 : 1,\n"
+              "  27 : 1,\n"
+              "}");
+
+    map.canonicalize();
+
+    // Canonically ordered by key encoding.
+    EXPECT_EQ(prettyPrint(&map),
+              "{\n"
+              "  1 : 1,\n"
+              "  2 : 1,\n"
+              "  -4 : 1,\n"
+              "  -5 : 1,\n"
+              "  27 : 1,\n"
+              "  254 : 1,\n"
+              "  'h' : 1,\n"
+              "  'hello' : 1,\n"
+              "  'hellp' : 1,\n"
+              "}");
+}
+
+TEST(MapCanonicalizationTest, DecanonicalizationTest) {
+    Map map;
+    map.add("hello", 1)
+            .add("h", 1)
+            .add(1, 1)
+            .add(-4, 1)
+            .add(-5, 1)
+            .add(2, 1)
+            .add("hellp", 1)
+            .add(254, 1)
+            .add(27, 1);
+
+    EXPECT_FALSE(map.isCanonical());
+    map.canonicalize();
+    EXPECT_TRUE(map.isCanonical());
+
+    /*
+     * Any operation that could potentially mutate the contents of the map should mark it as
+     * non-canonical.  This includes getting non-const iterators or using the non-const [] operator.
+     */
+
+    map.begin();
+    EXPECT_FALSE(map.isCanonical());
+
+    map.canonicalize();
+    EXPECT_TRUE(map.isCanonical());
+
+    map.end();  // Non-const map.end() invalidates canonicalization.
+    EXPECT_FALSE(map.isCanonical());
+
+    map.canonicalize();
+    EXPECT_TRUE(map.isCanonical());
+
+    map[0];  // Non-const map.operator[]() invalidates canonicalization.
+    EXPECT_FALSE(map.isCanonical());
+}
+
+TEST(MapCanonicalizationTest, RecursiveTest) {
+    auto map = Map()  //
+                       .add("hello", 1)
+                       .add("h", 1)
+                       .add(1, 1)
+                       .add(-4, Array(  //
+                                        2, 1,
+                                        Map()  //
+                                                .add("b", 1)
+                                                .add(Map()  //
+                                                             .add("hello", "goodbye")
+                                                             .add(1, 9)
+                                                             .add(0, 3),
+                                                     Map()  //
+                                                             .add("b", 1)
+                                                             .add("a", 2))))
+                       .add(-5, 1)
+                       .add(2, 1)
+                       .add("hellp", 1)
+                       .add(254, 1)
+                       .add(27, 1);
+
+    EXPECT_EQ(prettyPrint(&map),
+              "{\n"
+              "  'hello' : 1,\n"
+              "  'h' : 1,\n"
+              "  1 : 1,\n"
+              "  -4 : [\n"
+              "    2,\n"
+              "    1,\n"
+              "    {\n"
+              "      'b' : 1,\n"
+              "      {\n"
+              "        'hello' : 'goodbye',\n"
+              "        1 : 9,\n"
+              "        0 : 3,\n"
+              "      } : {\n"
+              "        'b' : 1,\n"
+              "        'a' : 2,\n"
+              "      },\n"
+              "    },\n"
+              "  ],\n"
+              "  -5 : 1,\n"
+              "  2 : 1,\n"
+              "  'hellp' : 1,\n"
+              "  254 : 1,\n"
+              "  27 : 1,\n"
+              "}");
+
+    map.canonicalize(true /* recurse */);
+
+    EXPECT_EQ(prettyPrint(&map),
+              "{\n"
+              "  1 : 1,\n"
+              "  2 : 1,\n"
+              "  -4 : [\n"
+              "    2,\n"
+              "    1,\n"
+              "    {\n"
+              "      'b' : 1,\n"
+              "      {\n"
+              "        0 : 3,\n"
+              "        1 : 9,\n"
+              "        'hello' : 'goodbye',\n"
+              "      } : {\n"
+              "        'a' : 2,\n"
+              "        'b' : 1,\n"
+              "      },\n"
+              "    },\n"
+              "  ],\n"
+              "  -5 : 1,\n"
+              "  27 : 1,\n"
+              "  254 : 1,\n"
+              "  'h' : 1,\n"
+              "  'hello' : 1,\n"
+              "  'hellp' : 1,\n"
+              "}");
 }
 
 class MockParseClient : public ParseClient {
@@ -893,7 +1134,7 @@ MATCHER_P(IsArrayOfSize, value, "") {
 }
 
 MATCHER_P(IsSemanticTagOfValue, value, "") {
-    return arg->type() == SEMANTIC && arg->asSemantic()->value() == value;
+    return arg->semanticTagCount() == 1 && arg->semanticTag() == value;
 }
 
 MATCHER_P(IsMapOfSize, value, "") {
@@ -1038,19 +1279,19 @@ TEST(StreamParseTest, Array) {
     parse(encoded.data(), encoded.data() + encoded.size(), &mpc);
 }
 
-TEST(StreamParseTest, Semantic) {
+TEST(StreamParseTest, SemanticTag) {
     MockParseClient mpc;
-    Semantic val(15, Array(-5, "Hi"));
+    SemanticTag val(15, Array(-5, "Hi"));
     auto encoded = val.encode();
-    ASSERT_NE(val.child()->asArray(), nullptr);
-    const Array& array = *(val.child()->asArray());
+    ASSERT_NE(val.asArray(), nullptr);
+    const Array& array = *(val.asArray());
     uint8_t* encBegin = encoded.data();
     uint8_t* encEnd = encoded.data() + encoded.size();
 
     {
         InSequence s;
         const uint8_t* pos = encBegin;
-        EXPECT_CALL(mpc, item(IsSemanticTagOfValue(val.value()), pos, pos + 1, pos + 1))
+        EXPECT_CALL(mpc, item(IsSemanticTagOfValue(val.semanticTag()), pos, pos + 1, pos + 1))
                 .WillOnce(Return(&mpc));
         ++pos;
         const uint8_t* innerArrayBegin = pos;
@@ -1066,7 +1307,8 @@ TEST(StreamParseTest, Semantic) {
         EXPECT_CALL(mpc,
                     itemEnd(IsArrayOfSize(array.size()), innerArrayBegin, innerArrayBegin + 1, pos))
                 .WillOnce(Return(&mpc));
-        EXPECT_CALL(mpc, itemEnd(IsSemanticTagOfValue(val.value()), encBegin, encBegin + 1, encEnd))
+        EXPECT_CALL(mpc, itemEnd(IsSemanticTagOfValue(val.semanticTag()), encBegin, encBegin + 1,
+                                 encEnd))
                 .WillOnce(Return(&mpc));
     }
 
@@ -1194,8 +1436,15 @@ TEST(FullParserTest, Map) {
     EXPECT_THAT(item, MatchesItem(ByRef(val)));
 }
 
-TEST(FullParserTest, Semantic) {
-    Semantic val(99, "Salem");
+TEST(FullParserTest, SemanticTag) {
+    SemanticTag val(99, "Salem");
+
+    auto [item, pos, message] = parse(val.encode());
+    EXPECT_THAT(item, MatchesItem(ByRef(val)));
+}
+
+TEST(FullParserTest, NestedSemanticTag) {
+    SemanticTag val(10, SemanticTag(99, "Salem"));
 
     auto [item, pos, message] = parse(val.encode());
     EXPECT_THAT(item, MatchesItem(ByRef(val)));
@@ -1266,183 +1515,21 @@ TEST(FullParserTest, MapWithTruncatedEntry) {
     EXPECT_EQ("Need 4 byte(s) for length field, have 3.", message);
 }
 
-TEST(ItemDowncastingTest, Uint) {
-    auto item = std::unique_ptr<Item>(new Uint(1));
-    EXPECT_NE(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Nint) {
-    auto item = std::unique_ptr<Item>(new Nint(-211));
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Tstr) {
-    auto item = std::unique_ptr<Item>(new Tstr("string"));
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Bstr) {
-    auto item = std::unique_ptr<Item>(new Bstr(std::vector<uint8_t>{1, 2, 3, 4, 5, 6}));
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Array) {
-    auto item = std::unique_ptr<Item>(new Array(1, 2, "3", "4", Array(5, "6")));
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Map) {
-    auto item = std::unique_ptr<Item>(new Map(1, 2, "key", "value"));
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Bool) {
-    auto item = std::unique_ptr<Item>(new Bool(false));
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Null) {
-    auto item = std::unique_ptr<Item>(new Null());
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
-TEST(ItemDowncastingTest, Semantic) {
-    auto item = std::unique_ptr<Item>(new Semantic(11, Map("key", Array(1, 2, 3))));
-    EXPECT_EQ(downcastItem<Uint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Nint>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Tstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bstr>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Array>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Map>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Bool>(std::move(item)).get(), nullptr);
-    EXPECT_EQ(downcastItem<Null>(std::move(item)).get(), nullptr);
-    EXPECT_NE(downcastItem<Semantic>(std::move(item)).get(), nullptr);
-    // Uncommenting following lines should not compile
-    // EXPECT_EQ(downcastItem<Int>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<CompoundItem>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Simple>(std::move(item)).get(), nullptr);
-    // EXPECT_EQ(downcastItem<Item>(std::move(item)).get(), nullptr);
-}
-
 TEST(MapGetValueByKeyTest, Map) {
     Array compoundItem(1, 2, 3, 4, 5, Map(4, 5, "a", "b"));
     auto clone = compoundItem.clone();
     Map item(1, 2, "key", "value", "item", std::move(compoundItem));
-    auto [value1, found1] = item.get(1);
-    EXPECT_TRUE(found1);
+    auto& value1 = item.get(1);
+    EXPECT_NE(value1.get(), nullptr);
     EXPECT_EQ(*value1, Uint(2));
-    auto [value2, found2] = item.get("key");
-    EXPECT_TRUE(found2);
+    auto& value2 = item.get("key");
+    EXPECT_NE(value2.get(), nullptr);
     EXPECT_EQ(*value2, Tstr("value"));
-    auto [value3, found3] = item.get("item");
-    EXPECT_TRUE(found3);
+    auto& value3 = item.get("item");
+    EXPECT_NE(value3.get(), nullptr);
     EXPECT_EQ(*value3, *clone);
-    auto [value4, found4] = item.get("wrong");
-    EXPECT_FALSE(found4);
+    auto& value4 = item.get("wrong");
+    EXPECT_EQ(value4.get(), nullptr);
 }
 
 TEST(EmptyBstrTest, Bstr) {
@@ -1451,6 +1538,120 @@ TEST(EmptyBstrTest, Bstr) {
     auto [obj, pos, message] = parse(encoding.data(), encoding.size());
     EXPECT_NE(obj.get(), nullptr);
     EXPECT_EQ(*obj, bstr);
+}
+
+TEST(ArrayIterationTest, EmptyArray) {
+    Array array;
+    EXPECT_EQ(array.begin(), array.end());
+
+    const Array& const_array = array;
+    EXPECT_EQ(const_array.begin(), const_array.end());
+}
+
+TEST(ArrayIterationTest, ForwardTest) {
+    Array array(1, 2, 3, "hello", -4);
+
+    auto iter = array.begin();
+    ASSERT_NE(iter, array.end());
+    EXPECT_EQ(**iter, Uint(1));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter++, Uint(2));
+
+    ASSERT_NE(iter, array.end());
+    EXPECT_EQ(**iter, Uint(3));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter++, Tstr("hello"));
+
+    ASSERT_NE(iter, array.end());
+    EXPECT_EQ(**iter, Nint(-4));
+
+    EXPECT_EQ(++iter, array.end());
+}
+
+TEST(ArrayIterationTest, BidirectionalTest) {
+    Array array(1, 2, 3, "hello", -4);
+
+    auto iter = array.begin();
+    ASSERT_NE(iter, array.end());
+    EXPECT_EQ(**iter, Uint(1));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter, Uint(2));
+
+    ASSERT_NE(--iter, array.end());
+    ASSERT_EQ(iter, array.begin());
+    EXPECT_EQ(**iter, Uint(1));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter, Uint(2));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter--, Uint(3));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter, Uint(3));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter, Tstr("hello"));
+
+    ASSERT_NE(++iter, array.end());
+    EXPECT_EQ(**iter, Nint(-4));
+
+    EXPECT_EQ(++iter, array.end());
+}
+
+TEST(MapIterationTest, EmptyMap) {
+    Map map;
+
+    EXPECT_EQ(map.begin(), map.end());
+}
+
+TEST(MapIterationTest, ForwardTest) {
+    Map map(1, 2, 3, "hello", -4, 5);
+
+    auto iter = map.begin();
+    ASSERT_NE(iter, map.end());
+    EXPECT_EQ(*iter->first, Uint(1));
+    EXPECT_EQ(*iter->second, Uint(2));
+
+    ASSERT_NE(++iter, map.end());
+    EXPECT_EQ(*iter->first, Uint(3));
+    EXPECT_EQ(*(iter++)->second, Tstr("hello"));
+
+    ASSERT_NE(iter, map.end());
+    EXPECT_EQ(*iter->first, Nint(-4));
+    EXPECT_EQ(*(iter++)->second, Uint(5));
+
+    EXPECT_EQ(iter, map.end());
+}
+
+TEST(MapIterationTest, BidirectionalTest) {
+    Map map(1, 2, 3, "hello", -4, 5);
+
+    auto iter = map.begin();
+    ASSERT_NE(iter, map.end());
+    EXPECT_EQ(*iter->first, Uint(1));
+    EXPECT_EQ(*iter->second, Uint(2));
+
+    ASSERT_NE(++iter, map.end());
+    EXPECT_EQ(*iter->first, Uint(3));
+    EXPECT_EQ(*(iter--)->second, Tstr("hello"));
+
+    ASSERT_NE(iter, map.end());
+    EXPECT_EQ(*iter->first, Uint(1));
+    EXPECT_EQ(*(iter++)->second, Uint(2));
+
+    ASSERT_NE(iter, map.end());
+    EXPECT_EQ(*iter->first, Uint(3));
+    EXPECT_EQ(*iter->second, Tstr("hello"));
+
+    ASSERT_NE(++iter, map.end());
+    EXPECT_EQ(*iter->first, Nint(-4));
+    EXPECT_EQ(*(iter++)->second, Uint(5));
+
+    EXPECT_EQ(iter, map.end());
 }
 
 int main(int argc, char** argv) {
