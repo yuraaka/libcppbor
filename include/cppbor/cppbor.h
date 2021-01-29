@@ -63,7 +63,8 @@ class Bool;
 class Array;
 class Map;
 class Null;
-class Semantic;
+class SemanticTag;
+class EncodedItem;
 
 /**
  * Returns the size of a CBOR header that contains the additional info value addlInfo.
@@ -111,15 +112,55 @@ class Item {
     virtual MajorType type() const = 0;
 
     // These methods safely downcast an Item to the appropriate subclass.
-    virtual const Int* asInt() const { return nullptr; }
-    virtual const Uint* asUint() const { return nullptr; }
-    virtual const Nint* asNint() const { return nullptr; }
-    virtual const Tstr* asTstr() const { return nullptr; }
-    virtual const Bstr* asBstr() const { return nullptr; }
-    virtual const Simple* asSimple() const { return nullptr; }
-    virtual const Map* asMap() const { return nullptr; }
-    virtual const Array* asArray() const { return nullptr; }
-    virtual const Semantic* asSemantic() const { return nullptr; }
+    virtual Int* asInt() { return nullptr; }
+    const Int* asInt() const { return const_cast<Item*>(this)->asInt(); }
+    virtual Uint* asUint() { return nullptr; }
+    const Uint* asUint() const { return const_cast<Item*>(this)->asUint(); }
+    virtual Nint* asNint() { return nullptr; }
+    const Nint* asNint() const { return const_cast<Item*>(this)->asNint(); }
+    virtual Tstr* asTstr() { return nullptr; }
+    const Tstr* asTstr() const { return const_cast<Item*>(this)->asTstr(); }
+    virtual Bstr* asBstr() { return nullptr; }
+    const Bstr* asBstr() const { return const_cast<Item*>(this)->asBstr(); }
+    virtual Simple* asSimple() { return nullptr; }
+    const Simple* asSimple() const { return const_cast<Item*>(this)->asSimple(); }
+    virtual Map* asMap() { return nullptr; }
+    const Map* asMap() const { return const_cast<Item*>(this)->asMap(); }
+    virtual Array* asArray() { return nullptr; }
+    const Array* asArray() const { return const_cast<Item*>(this)->asArray(); }
+
+    // Like those above, these methods safely downcast an Item when it's actually a SemanticTag.
+    // However, if you think you want to use these methods, you probably don't.  Typically, the way
+    // you should handle tagged Items is by calling the appropriate method above (e.g. asInt())
+    // which will return a pointer to the tagged Item, rather than the tag itself.  If you want to
+    // find out if the Item* you're holding is to something with one or more tags applied, see
+    // semanticTagCount() and semanticTag() below.
+    virtual SemanticTag* asSemanticTag() { return nullptr; }
+    const SemanticTag* asSemanticTag() const { return const_cast<Item*>(this)->asSemanticTag(); }
+
+    /**
+     * Returns the number of semantic tags prefixed to this Item.
+     */
+    virtual size_t semanticTagCount() const { return 0; }
+
+    /**
+     * Returns the semantic tag at the specified nesting level `nesting`, iff `nesting` is less than
+     * the value returned by semanticTagCount().
+     *
+     * CBOR tags are "nested" by applying them in sequence.  The "rightmost" tag is the "inner" tag.
+     * That is, given:
+     *
+     *     4(5(6("AES"))) which encodes as C1 C2 C3 63 414553
+     *
+     * The tstr "AES" is tagged with 6.  The combined entity ("AES" tagged with 6) is tagged with 5,
+     * etc.  So in this example, semanticTagCount() would return 3, and semanticTag(0) would return
+     * 5 semanticTag(1) would return 5 and semanticTag(2) would return 4.  For values of n > 2,
+     * semanticTag(n) will return 0, but this is a meaningless value.
+     *
+     * If this layering is confusing, you probably don't have to worry about it. Nested tagging does
+     * not appear to be common, so semanticTag(0) is the only one you'll use.
+     */
+    virtual uint64_t semanticTag(size_t /* nesting */ = 0) const { return 0; }
 
     /**
      * Returns true if this is a "compound" item, i.e. one that contains one or more other items.
@@ -196,6 +237,37 @@ class Item {
 };
 
 /**
+ * EncodedItem represents a bit of already-encoded CBOR. Caveat emptor: It does no checking to
+ * ensure that the provided data is a valid encoding, cannot be meaninfully-compared with other
+ * kinds of items and you cannot use the as*() methods to find out what's inside it.
+ */
+class EncodedItem : public Item {
+  public:
+    explicit EncodedItem(std::vector<uint8_t> value) : mValue(std::move(value)) {}
+
+    bool operator==(const EncodedItem& other) const& { return mValue == other.mValue; }
+
+    // Type can't be meaningfully-obtained. We could extract the type from the first byte and return
+    // it, but you can't do any of the normal things with an EncodedItem so there's no point.
+    MajorType type() const override {
+        assert(false);
+        return static_cast<MajorType>(-1);
+    }
+    size_t encodedSize() const override { return mValue.size(); }
+    uint8_t* encode(uint8_t* pos, const uint8_t* end) const override {
+        if (end - pos < static_cast<ssize_t>(mValue.size())) return nullptr;
+        return std::copy(mValue.begin(), mValue.end(), pos);
+    }
+    void encode(EncodeCallback encodeCallback) const override {
+        std::for_each(mValue.begin(), mValue.end(), encodeCallback);
+    }
+    std::unique_ptr<Item> clone() const override { return std::make_unique<EncodedItem>(mValue); }
+
+  private:
+    std::vector<uint8_t> mValue;
+};
+
+/**
  * Int is an abstraction that allows Uint and Nint objects to be manipulated without caring about
  * the sign.
  */
@@ -205,7 +277,7 @@ class Int : public Item {
 
     virtual int64_t value() const = 0;
 
-    const Int* asInt() const override { return this; }
+    Int* asInt() override { return this; }
 };
 
 /**
@@ -220,7 +292,7 @@ class Uint : public Int {
     bool operator==(const Uint& other) const& { return mValue == other.mValue; }
 
     MajorType type() const override { return kMajorType; }
-    const Uint* asUint() const override { return this; }
+    Uint* asUint() override { return this; }
 
     size_t encodedSize() const override { return headerSize(mValue); }
 
@@ -235,7 +307,7 @@ class Uint : public Int {
         encodeHeader(mValue, encodeCallback);
     }
 
-    virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Uint>(mValue); }
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Uint>(mValue); }
 
   private:
     uint64_t mValue;
@@ -258,7 +330,7 @@ class Nint : public Int {
     bool operator==(const Nint& other) const& { return mValue == other.mValue; }
 
     MajorType type() const override { return kMajorType; }
-    const Nint* asNint() const override { return this; }
+    Nint* asNint() override { return this; }
     size_t encodedSize() const override { return headerSize(addlInfo()); }
 
     int64_t value() const override { return mValue; }
@@ -271,7 +343,7 @@ class Nint : public Int {
         encodeHeader(addlInfo(), encodeCallback);
     }
 
-    virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Nint>(mValue); }
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Nint>(mValue); }
 
   private:
     uint64_t addlInfo() const { return -1ll - mValue; }
@@ -285,6 +357,9 @@ class Nint : public Int {
 class Bstr : public Item {
   public:
     static constexpr MajorType kMajorType = BSTR;
+
+    // Construct an empty Bstr
+    explicit Bstr() {}
 
     // Construct from a vector
     explicit Bstr(std::vector<uint8_t> v) : mValue(std::move(v)) {}
@@ -313,7 +388,7 @@ class Bstr : public Item {
     bool operator==(const Bstr& other) const& { return mValue == other.mValue; }
 
     MajorType type() const override { return kMajorType; }
-    const Bstr* asBstr() const override { return this; }
+    Bstr* asBstr() override { return this; }
     size_t encodedSize() const override { return headerSize(mValue.size()) + mValue.size(); }
     using Item::encode;
     uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
@@ -323,8 +398,9 @@ class Bstr : public Item {
     }
 
     const std::vector<uint8_t>& value() const { return mValue; }
+    std::vector<uint8_t>&& moveValue() { return std::move(mValue); }
 
-    virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Bstr>(mValue); }
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Bstr>(mValue); }
 
   private:
     void encodeValue(EncodeCallback encodeCallback) const;
@@ -333,7 +409,7 @@ class Bstr : public Item {
 };
 
 /**
- * Bstr is a concrete Item that implements major type 3.
+ * Tstr is a concrete Item that implements major type 3.
  */
 class Tstr : public Item {
   public:
@@ -363,7 +439,7 @@ class Tstr : public Item {
     bool operator==(const Tstr& other) const& { return mValue == other.mValue; }
 
     MajorType type() const override { return kMajorType; }
-    const Tstr* asTstr() const override { return this; }
+    Tstr* asTstr() override { return this; }
     size_t encodedSize() const override { return headerSize(mValue.size()) + mValue.size(); }
     using Item::encode;
     uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
@@ -373,40 +449,14 @@ class Tstr : public Item {
     }
 
     const std::string& value() const { return mValue; }
+    std::string&& moveValue() { return std::move(mValue); }
 
-    virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Tstr>(mValue); }
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Tstr>(mValue); }
 
   private:
     void encodeValue(EncodeCallback encodeCallback) const;
 
     std::string mValue;
-};
-
-/**
- * CompoundItem is an abstract Item that provides common functionality for Items that contain other
- * items, i.e. Arrays (CBOR type 4) and Maps (CBOR type 5).
- */
-class CompoundItem : public Item {
-  public:
-    bool operator==(const CompoundItem& other) const&;
-
-    virtual size_t size() const { return mEntries.size(); }
-
-    bool isCompound() const override { return true; }
-
-    size_t encodedSize() const override {
-        return std::accumulate(mEntries.begin(), mEntries.end(), headerSize(size()),
-                               [](size_t sum, auto& entry) { return sum + entry->encodedSize(); });
-    }
-
-    using Item::encode;  // Make base versions visible.
-    uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
-    void encode(EncodeCallback encodeCallback) const override;
-
-    virtual uint64_t addlInfo() const = 0;
-
-  protected:
-    std::vector<std::unique_ptr<Item>> mEntries;
 };
 
 /*
@@ -416,7 +466,7 @@ class CompoundItem : public Item {
  * move-only ensures that they're never copied accidentally.  If you actually want to copy an Array,
  * use the clone() method.
  */
-class Array : public CompoundItem {
+class Array : public Item {
   public:
     static constexpr MajorType kMajorType = ARRAY;
 
@@ -425,6 +475,8 @@ class Array : public CompoundItem {
     Array(Array&&) = default;
     Array& operator=(const Array&) = delete;
     Array& operator=(Array&&) = default;
+
+    bool operator==(const Array& other) const&;
 
     /**
      * Construct an Array from a variable number of arguments of different types.  See
@@ -443,15 +495,37 @@ class Array : public CompoundItem {
     template <typename T>
     Array&& add(T&& v) &&;
 
-    const std::unique_ptr<Item>& operator[](size_t index) const { return mEntries[index]; }
-    std::unique_ptr<Item>& operator[](size_t index) { return mEntries[index]; }
+    bool isCompound() const override { return true; }
+
+    virtual size_t size() const { return mEntries.size(); }
+
+    size_t encodedSize() const override {
+        return std::accumulate(mEntries.begin(), mEntries.end(), headerSize(size()),
+                               [](size_t sum, auto& entry) { return sum + entry->encodedSize(); });
+    }
+
+    using Item::encode;  // Make base versions visible.
+    uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
+    void encode(EncodeCallback encodeCallback) const override;
+
+    const std::unique_ptr<Item>& operator[](size_t index) const { return get(index); }
+    std::unique_ptr<Item>& operator[](size_t index) { return get(index); }
+
+    const std::unique_ptr<Item>& get(size_t index) const { return mEntries[index]; }
+    std::unique_ptr<Item>& get(size_t index) { return mEntries[index]; }
 
     MajorType type() const override { return kMajorType; }
-    const Array* asArray() const override { return this; }
+    Array* asArray() override { return this; }
 
-    virtual std::unique_ptr<Item> clone() const override;
+    std::unique_ptr<Item> clone() const override;
 
-    uint64_t addlInfo() const override { return size(); }
+    auto begin() { return mEntries.begin(); }
+    auto begin() const { return mEntries.begin(); }
+    auto end() { return mEntries.end(); }
+    auto end() const { return mEntries.end(); }
+
+  protected:
+    std::vector<std::unique_ptr<Item>> mEntries;
 };
 
 /*
@@ -461,15 +535,19 @@ class Array : public CompoundItem {
  * move-only ensures that they're never copied accidentally.  If you actually want to copy a
  * Map, use the clone() method.
  */
-class Map : public CompoundItem {
+class Map : public Item {
   public:
     static constexpr MajorType kMajorType = MAP;
+
+    using entry_type = std::pair<std::unique_ptr<Item>, std::unique_ptr<Item>>;
 
     Map() = default;
     Map(const Map& other) = delete;
     Map(Map&&) = default;
     Map& operator=(const Map& other) = delete;
     Map& operator=(Map&&) = default;
+
+    bool operator==(const Map& other) const&;
 
     /**
      * Construct a Map from a variable number of arguments of different types.  An even number of
@@ -489,87 +567,136 @@ class Map : public CompoundItem {
     template <typename Key, typename Value>
     Map&& add(Key&& key, Value&& value) &&;
 
-    size_t size() const override {
-        assertInvariant();
-        return mEntries.size() / 2;
+    bool isCompound() const override { return true; }
+
+    virtual size_t size() const { return mEntries.size(); }
+
+    size_t encodedSize() const override {
+        return std::accumulate(
+                mEntries.begin(), mEntries.end(), headerSize(size()), [](size_t sum, auto& entry) {
+                    return sum + entry.first->encodedSize() + entry.second->encodedSize();
+                });
     }
 
+    using Item::encode;  // Make base versions visible.
+    uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
+    void encode(EncodeCallback encodeCallback) const override;
+
+    /**
+     * Find and return the value associated with `key`, if any.
+     *
+     * If the searched-for `key` is not present, returns `nullptr`.
+     *
+     * Note that if the map is canonicalized (sorted), Map::get() peforms a binary search.  If your
+     * map is large and you're searching in it many times, it may be worthwhile to canonicalize it
+     * to make Map::get() faster.  Any use of a method that might modify the map disables the
+     * speedup.
+     */
     template <typename Key, typename Enable>
-    std::pair<std::unique_ptr<Item>&, bool> get(Key key);
+    const std::unique_ptr<Item>& get(Key key) const;
 
-    std::pair<const std::unique_ptr<Item>&, const std::unique_ptr<Item>&> operator[](
-            size_t index) const {
-        assertInvariant();
-        return {mEntries[index * 2], mEntries[index * 2 + 1]};
+    // Note that use of non-const operator[] marks the map as not canonicalized.
+    auto& operator[](size_t index) {
+        mCanonicalized = false;
+        return mEntries[index];
     }
-
-    std::pair<std::unique_ptr<Item>&, std::unique_ptr<Item>&> operator[](size_t index) {
-        assertInvariant();
-        return {mEntries[index * 2], mEntries[index * 2 + 1]};
-    }
+    const auto& operator[](size_t index) const { return mEntries[index]; }
 
     MajorType type() const override { return kMajorType; }
-    const Map* asMap() const override { return this; }
+    Map* asMap() override { return this; }
 
-    virtual std::unique_ptr<Item> clone() const override;
+    /**
+     * Sorts the map in canonical order, as defined in RFC 7049. Use this before encoding if you
+     * want canonicalization; cppbor does not canonicalize by default, though the integer encodings
+     * are always canonical and cppbor does not support indefinite-length encodings, so map order
+     * canonicalization is the only thing that needs to be done.
+     *
+     * @param recurse If set to true, canonicalize() will also walk the contents of the map and
+     * canonicalize any contained maps as well.
+     */
+    Map& canonicalize(bool recurse = false) &;
+    Map&& canonicalize(bool recurse = false) && {
+        canonicalize(recurse);
+        return std::move(*this);
+    }
 
-    uint64_t addlInfo() const override { return size(); }
+    bool isCanonical() { return mCanonicalized; }
+
+    std::unique_ptr<Item> clone() const override;
+
+    auto begin() {
+        mCanonicalized = false;
+        return mEntries.begin();
+    }
+    auto begin() const { return mEntries.begin(); }
+    auto end() {
+        mCanonicalized = false;
+        return mEntries.end();
+    }
+    auto end() const { return mEntries.end(); }
+
+    // Returns true if a < b, per CBOR map key canonicalization rules.
+    static bool keyLess(const Item* a, const Item* b);
+
+  protected:
+    std::vector<entry_type> mEntries;
 
   private:
-    void assertInvariant() const;
+    bool mCanonicalized = false;
 };
 
-class Semantic : public CompoundItem {
+class SemanticTag : public Item {
   public:
     static constexpr MajorType kMajorType = SEMANTIC;
 
     template <typename T>
-    explicit Semantic(uint64_t value, T&& child);
+    SemanticTag(uint64_t tagValue, T&& taggedItem);
+    SemanticTag(const SemanticTag& other) = delete;
+    SemanticTag(SemanticTag&&) = default;
+    SemanticTag& operator=(const SemanticTag& other) = delete;
+    SemanticTag& operator=(SemanticTag&&) = default;
 
-    Semantic(const Semantic& other) = delete;
-    Semantic(Semantic&&) = default;
-    Semantic& operator=(const Semantic& other) = delete;
-    Semantic& operator=(Semantic&&) = default;
-
-    size_t size() const override {
-        assertInvariant();
-        return 1;
+    bool operator==(const SemanticTag& other) const& {
+        return mValue == other.mValue && *mTaggedItem == *other.mTaggedItem;
     }
 
-    size_t encodedSize() const override {
-        return std::accumulate(mEntries.begin(), mEntries.end(), headerSize(mValue),
-                               [](size_t sum, auto& entry) { return sum + entry->encodedSize(); });
-    }
+    bool isCompound() const override { return true; }
 
-    MajorType type() const override { return kMajorType; }
-    const Semantic* asSemantic() const override { return this; }
+    virtual size_t size() const { return 1; }
 
-    const std::unique_ptr<Item>& child() const {
-        assertInvariant();
-        return mEntries[0];
-    }
+    // Encoding returns the tag + enclosed Item.
+    size_t encodedSize() const override { return headerSize(mValue) + mTaggedItem->encodedSize(); }
 
-    std::unique_ptr<Item>& child() {
-        assertInvariant();
-        return mEntries[0];
-    }
+    using Item::encode;  // Make base versions visible.
+    uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
+    void encode(EncodeCallback encodeCallback) const override;
 
-    uint64_t value() const { return mValue; }
+    // type() is a bit special.  In normal usage it should return the wrapped type, but during
+    // parsing when we haven't yet parsed the tagged item, it needs to return SEMANTIC.
+    MajorType type() const override { return mTaggedItem ? mTaggedItem->type() : SEMANTIC; }
+    SemanticTag* asSemanticTag() override { return this; }
 
-    uint64_t addlInfo() const override { return value(); }
+    // Type information reflects the enclosed Item.  Note that if the immediately-enclosed Item is
+    // another tag, these methods will recurse down to the non-tag Item.
+    Int* asInt() override { return mTaggedItem->asInt(); }
+    Uint* asUint() override { return mTaggedItem->asUint(); }
+    Nint* asNint() override { return mTaggedItem->asNint(); }
+    Tstr* asTstr() override { return mTaggedItem->asTstr(); }
+    Bstr* asBstr() override { return mTaggedItem->asBstr(); }
+    Simple* asSimple() override { return mTaggedItem->asSimple(); }
+    Map* asMap() override { return mTaggedItem->asMap(); }
+    Array* asArray() override { return mTaggedItem->asArray(); }
 
-    virtual std::unique_ptr<Item> clone() const override {
-        assertInvariant();
-        return std::make_unique<Semantic>(mValue, mEntries[0]->clone());
-    }
+    std::unique_ptr<Item> clone() const override;
+
+    size_t semanticTagCount() const override;
+    uint64_t semanticTag(size_t nesting = 0) const override;
 
   protected:
-    Semantic() = default;
-    Semantic(uint64_t value) : mValue(value) {}
+    SemanticTag() = default;
+    SemanticTag(uint64_t value) : mValue(value) {}
     uint64_t mValue;
-
-  private:
-    void assertInvariant() const;
+    std::unique_ptr<Item> mTaggedItem;
 };
 
 /**
@@ -585,7 +712,7 @@ class Simple : public Item {
     virtual SimpleType simpleType() const = 0;
     MajorType type() const override { return kMajorType; }
 
-    const Simple* asSimple() const override { return this; }
+    Simple* asSimple() override { return this; }
 
     virtual const Bool* asBool() const { return nullptr; };
     virtual const Null* asNull() const { return nullptr; };
@@ -618,7 +745,7 @@ class Bool : public Simple {
 
     bool value() const { return mValue; }
 
-    virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Bool>(mValue); }
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Bool>(mValue); }
 
   private:
     bool mValue;
@@ -646,24 +773,36 @@ class Null : public Simple {
         encodeHeader(NULL_V, encodeCallback);
     }
 
-    virtual std::unique_ptr<Item> clone() const override { return std::make_unique<Null>(); }
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Null>(); }
 };
 
-template <typename T>
-std::unique_ptr<T> downcastItem(std::unique_ptr<Item>&& v) {
-    static_assert(std::is_base_of_v<Item, T> && !std::is_abstract_v<T>,
-                  "returned type is not an Item or is an abstract class");
-    if (v && T::kMajorType == v->type()) {
-        if constexpr (std::is_base_of_v<Simple, T>) {
-            if (T::kSimpleType != v->asSimple()->simpleType()) {
-                return nullptr;
-            }
-        }
-        return std::unique_ptr<T>(static_cast<T*>(v.release()));
-    } else {
-        return nullptr;
-    }
-}
+/**
+ * Returns pretty-printed CBOR for |item|
+ *
+ * If a byte-string is larger than |maxBStrSize| its contents will not be printed, instead the value
+ * of the form "<bstr size=1099016 sha1=ef549cca331f73dfae2090e6a37c04c23f84b07b>" will be
+ * printed. Pass zero for |maxBStrSize| to disable this.
+ *
+ * The |mapKeysToNotPrint| parameter specifies the name of map values to not print. This is useful
+ * for unit tests.
+ */
+std::string prettyPrint(const Item* item, size_t maxBStrSize = 32,
+                        const std::vector<std::string>& mapKeysNotToPrint = {});
+
+/**
+ * Returns pretty-printed CBOR for |value|.
+ *
+ * Only valid CBOR should be passed to this function.
+ *
+ * If a byte-string is larger than |maxBStrSize| its contents will not be printed, instead the value
+ * of the form "<bstr size=1099016 sha1=ef549cca331f73dfae2090e6a37c04c23f84b07b>" will be
+ * printed. Pass zero for |maxBStrSize| to disable this.
+ *
+ * The |mapKeysToNotPrint| parameter specifies the name of map values to not print. This is useful
+ * for unit tests.
+ */
+std::string prettyPrint(const std::vector<uint8_t>& encodedCbor, size_t maxBStrSize = 32,
+                        const std::vector<std::string>& mapKeysNotToPrint = {});
 
 /**
  * Details. Mostly you shouldn't have to look below, except perhaps at the docstring for makeItem.
@@ -717,6 +856,7 @@ struct is_text_type_v<
  *     (e1), unique_ptr (e2), reference (e3) or value (e3).  If provided by reference or value, will
  *     be moved if possible.  If provided by pointer, ownership is taken.
  * (f) null pointer;
+ * (g) enums, using the underlying integer value.
  */
 template <typename T>
 std::unique_ptr<Item> makeItem(T v) {
@@ -753,12 +893,22 @@ std::unique_ptr<Item> makeItem(T v) {
         p = new T(std::move(v));
     } else if constexpr (/* case f */ std::is_null_pointer_v<T>) {
         p = new Null();
+    } else if constexpr (/* case g */ std::is_enum_v<T>) {
+        return makeItem(static_cast<std::underlying_type_t<T>>(v));
     } else {
         // It's odd that this can't be static_assert(false), since it shouldn't be evaluated if one
         // of the above ifs matches.  But static_assert(false) always triggers.
         static_assert(std::is_same_v<T, bool>, "makeItem called with unsupported type");
     }
     return std::unique_ptr<Item>(p);
+}
+
+inline void map_helper(Map& /* map */) {}
+
+template <typename Key, typename Value, typename... Rest>
+inline void map_helper(Map& map, Key&& key, Value&& value, Rest&&... rest) {
+    map.add(std::forward<Key>(key), std::forward<Value>(value));
+    map_helper(map, std::forward<Rest>(rest)...);
 }
 
 }  // namespace details
@@ -788,14 +938,15 @@ template <typename... Args,
           /* Prevent use as copy ctor */ typename = std::enable_if_t<(sizeof...(Args)) != 1>>
 Map::Map(Args&&... args) {
     static_assert((sizeof...(Args)) % 2 == 0, "Map must have an even number of entries");
-    mEntries.reserve(sizeof...(args));
-    (mEntries.push_back(details::makeItem(std::forward<Args>(args))), ...);
+    mEntries.reserve(sizeof...(args) / 2);
+    details::map_helper(*this, std::forward<Args>(args)...);
 }
 
 template <typename Key, typename Value>
 Map& Map::add(Key&& key, Value&& value) & {
-    mEntries.push_back(details::makeItem(std::forward<Key>(key)));
-    mEntries.push_back(details::makeItem(std::forward<Value>(value)));
+    mEntries.push_back({details::makeItem(std::forward<Key>(key)),
+                        details::makeItem(std::forward<Value>(value))});
+    mCanonicalized = false;
     return *this;
 }
 
@@ -805,23 +956,31 @@ Map&& Map::add(Key&& key, Value&& value) && {
     return std::move(*this);
 }
 
-template <typename Key, typename = std::enable_if_t<std::is_integral_v<Key> ||
-                                                    details::is_text_type_v<Key>::value>>
-std::pair<std::unique_ptr<Item>&, bool> Map::get(Key key) {
-    assertInvariant();
+static const std::unique_ptr<Item> kEmptyItemPtr;
+
+template <typename Key,
+          typename = std::enable_if_t<std::is_integral_v<Key> || std::is_enum_v<Key> ||
+                                      details::is_text_type_v<Key>::value>>
+const std::unique_ptr<Item>& Map::get(Key key) const {
     auto keyItem = details::makeItem(key);
-    for (size_t i = 0; i < mEntries.size(); i += 2) {
-        if (*keyItem == *mEntries[i]) {
-            return {mEntries[i + 1], true};
-        }
+
+    if (mCanonicalized) {
+        // It's sorted, so binary-search it.
+        auto found = std::lower_bound(begin(), end(), keyItem.get(),
+                                      [](const entry_type& entry, const Item* key) {
+                                          return keyLess(entry.first.get(), key);
+                                      });
+        return (found == end() || *found->first != *keyItem) ? kEmptyItemPtr : found->second;
+    } else {
+        // Unsorted, do a linear search.
+        auto found = std::find_if(
+                begin(), end(), [&](const entry_type& entry) { return *entry.first == *keyItem; });
+        return found == end() ? kEmptyItemPtr : found->second;
     }
-    return {keyItem, false};
 }
 
 template <typename T>
-Semantic::Semantic(uint64_t value, T&& child) : mValue(value) {
-    mEntries.reserve(1);
-    mEntries.push_back(details::makeItem(std::forward<T>(child)));
-}
+SemanticTag::SemanticTag(uint64_t value, T&& taggedItem)
+    : mValue(value), mTaggedItem(details::makeItem(std::forward<T>(taggedItem))) {}
 
 }  // namespace cppbor
