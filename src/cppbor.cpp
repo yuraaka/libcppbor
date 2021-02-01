@@ -52,7 +52,7 @@ void writeBigEndian(T value, std::function<void(uint8_t)>& cb) {
     }
 }
 
-bool cborAreAllElementsNonCompound(const CompoundItem* compoundItem) {
+bool cborAreAllElementsNonCompound(const Item* compoundItem) {
     if (compoundItem->type() == ARRAY) {
         const Array* array = compoundItem->asArray();
         for (size_t n = 0; n < array->size(); n++) {
@@ -67,8 +67,7 @@ bool cborAreAllElementsNonCompound(const CompoundItem* compoundItem) {
         }
     } else {
         const Map* map = compoundItem->asMap();
-        for (size_t n = 0; n < map->size(); n++) {
-            auto [keyEntry, valueEntry] = (*map)[n];
+        for (auto& [keyEntry, valueEntry] : *map) {
             switch (keyEntry->type()) {
                 case ARRAY:
                 case MAP:
@@ -99,7 +98,18 @@ bool prettyPrintInternal(const Item* item, string& out, size_t indent, size_t ma
 
     string indentString(indent, ' ');
 
+    size_t tagCount = item->semanticTagCount();
+    while (tagCount > 0) {
+        --tagCount;
+        snprintf(buf, sizeof(buf), "tag %" PRIu64 " ", item->semanticTag(tagCount));
+        out.append(buf);
+    }
+
     switch (item->type()) {
+        case SEMANTIC:
+            // Handled above.
+            break;
+
         case UINT:
             snprintf(buf, sizeof(buf), "%" PRIu64, item->asUint()->unsignedValue());
             out.append(buf);
@@ -182,10 +192,8 @@ bool prettyPrintInternal(const Item* item, string& out, size_t indent, size_t ma
                 out.append("{}");
             } else {
                 out.append("{\n" + indentString);
-                for (size_t n = 0; n < map->size(); n++) {
+                for (auto& [map_key, map_value] : *map) {
                     out.append("  ");
-
-                    auto [map_key, map_value] = (*map)[n];
 
                     if (!prettyPrintInternal(map_key.get(), out, indent + 2, maxBStrSize,
                                              mapKeysToNotPrint)) {
@@ -206,14 +214,6 @@ bool prettyPrintInternal(const Item* item, string& out, size_t indent, size_t ma
                 }
                 out.append("}");
             }
-        } break;
-
-        case SEMANTIC: {
-            const Semantic* semantic = item->asSemantic();
-            snprintf(buf, sizeof(buf), "tag %" PRIu64 " ", semantic->value());
-            out.append(buf);
-            prettyPrintInternal(semantic->child().get(), out, indent, maxBStrSize,
-                                mapKeysToNotPrint);
         } break;
 
         case SIMPLE:
@@ -316,7 +316,7 @@ bool Item::operator==(const Item& other) const& {
         case SIMPLE:
             return *asSimple() == *(other.asSimple());
         case SEMANTIC:
-            return *asSemantic() == *(other.asSemantic());
+            return *asSemanticTag() == *(other.asSemanticTag());
         default:
             CHECK(false);  // Impossible to get here.
             return false;
@@ -365,17 +365,16 @@ void Tstr::encodeValue(EncodeCallback encodeCallback) const {
     }
 }
 
-bool CompoundItem::operator==(const CompoundItem& other) const& {
-    return type() == other.type()             //
-           && addlInfo() == other.addlInfo()  //
+bool Array::operator==(const Array& other) const& {
+    return size() == other.size()
            // Can't use vector::operator== because the contents are pointers.  std::equal lets us
            // provide a predicate that does the dereferencing.
            && std::equal(mEntries.begin(), mEntries.end(), other.mEntries.begin(),
                          [](auto& a, auto& b) -> bool { return *a == *b; });
 }
 
-uint8_t* CompoundItem::encode(uint8_t* pos, const uint8_t* end) const {
-    pos = encodeHeader(addlInfo(), pos, end);
+uint8_t* Array::encode(uint8_t* pos, const uint8_t* end) const {
+    pos = encodeHeader(size(), pos, end);
     if (!pos) return nullptr;
     for (auto& entry : mEntries) {
         pos = entry->encode(pos, end);
@@ -384,75 +383,11 @@ uint8_t* CompoundItem::encode(uint8_t* pos, const uint8_t* end) const {
     return pos;
 }
 
-void CompoundItem::encode(EncodeCallback encodeCallback) const {
-    encodeHeader(addlInfo(), encodeCallback);
+void Array::encode(EncodeCallback encodeCallback) const {
+    encodeHeader(size(), encodeCallback);
     for (auto& entry : mEntries) {
         entry->encode(encodeCallback);
     }
-}
-
-void Map::assertInvariant() const {
-    CHECK(mEntries.size() % 2 == 0);
-}
-
-bool mapKeyLess(const std::pair<std::unique_ptr<Item>, std::unique_ptr<Item>>& a,
-                const std::pair<std::unique_ptr<Item>, std::unique_ptr<Item>>& b) {
-    auto& keyA = a.first;
-    auto& keyB = b.first;
-
-    // CBOR map canonicalization rules are:
-
-    // 1. If two keys have different lengths, the shorter one sorts earlier.
-    if (keyA->encodedSize() < keyB->encodedSize()) return true;
-    if (keyA->encodedSize() > keyB->encodedSize()) return false;
-
-    // 2. If two keys have the same length, the one with the lower value in (byte-wise) lexical
-    // order sorts earlier.  This requires encoding both items.
-    auto encodedA = keyA->encode();
-    auto encodedB = keyB->encode();
-
-    return std::lexicographical_compare(encodedA.begin(), encodedA.end(),  //
-                                        encodedB.begin(), encodedB.end());
-}
-
-Map& Map::canonicalize() & {
-    assertInvariant();
-
-    if (size() < 2) {
-        // Empty or single-entry map; no need to reorder.
-        return *this;
-    }
-
-    // The entries of a Map are stored in a flat vector.  We can't easily apply
-    // std::sort on that, so instead we move all of the entries into a vector of
-    // std::pair, sort that, then move all of the entries back into the original
-    // flat vector.
-    vector<std::pair<std::unique_ptr<Item>, std::unique_ptr<Item>>> temp;
-    temp.reserve(size());
-
-    for (size_t i = 0; i < mEntries.size() - 1; i += 2) {
-        temp.push_back({std::move(mEntries[i]), std::move(mEntries[i + 1])});
-    }
-
-    std::sort(temp.begin(), temp.end(), mapKeyLess);
-
-    mEntries.resize(0);
-    mEntries.reserve(temp.size() * 2);  // Should be a NOP since capacity should be unchanged.
-    for (auto& entry : temp) {
-        mEntries.push_back(std::move(entry.first));
-        mEntries.push_back(std::move(entry.second));
-    }
-
-    return *this;
-}
-
-std::unique_ptr<Item> Map::clone() const {
-    assertInvariant();
-    auto res = std::make_unique<Map>();
-    for (size_t i = 0; i < mEntries.size(); i += 2) {
-        res->add(mEntries[i]->clone(), mEntries[i + 1]->clone());
-    }
-    return res;
 }
 
 std::unique_ptr<Item> Array::clone() const {
@@ -463,8 +398,144 @@ std::unique_ptr<Item> Array::clone() const {
     return res;
 }
 
-void Semantic::assertInvariant() const {
-    CHECK(mEntries.size() == 1);
+bool Map::operator==(const Map& other) const& {
+    return size() == other.size()
+           // Can't use vector::operator== because the contents are pairs of pointers.  std::equal
+           // lets us provide a predicate that does the dereferencing.
+           && std::equal(begin(), end(), other.begin(), [](auto& a, auto& b) {
+                  return *a.first == *b.first && *a.second == *b.second;
+              });
+}
+
+uint8_t* Map::encode(uint8_t* pos, const uint8_t* end) const {
+    pos = encodeHeader(size(), pos, end);
+    if (!pos) return nullptr;
+    for (auto& entry : mEntries) {
+        pos = entry.first->encode(pos, end);
+        if (!pos) return nullptr;
+        pos = entry.second->encode(pos, end);
+        if (!pos) return nullptr;
+    }
+    return pos;
+}
+
+void Map::encode(EncodeCallback encodeCallback) const {
+    encodeHeader(size(), encodeCallback);
+    for (auto& entry : mEntries) {
+        entry.first->encode(encodeCallback);
+        entry.second->encode(encodeCallback);
+    }
+}
+
+bool Map::keyLess(const Item* a, const Item* b) {
+    // CBOR map canonicalization rules are:
+
+    // 1. If two keys have different lengths, the shorter one sorts earlier.
+    if (a->encodedSize() < b->encodedSize()) return true;
+    if (a->encodedSize() > b->encodedSize()) return false;
+
+    // 2. If two keys have the same length, the one with the lower value in (byte-wise) lexical
+    // order sorts earlier.  This requires encoding both items.
+    auto encodedA = a->encode();
+    auto encodedB = b->encode();
+
+    return std::lexicographical_compare(encodedA.begin(), encodedA.end(),  //
+                                        encodedB.begin(), encodedB.end());
+}
+
+void recursivelyCanonicalize(std::unique_ptr<Item>& item) {
+    switch (item->type()) {
+        case UINT:
+        case NINT:
+        case BSTR:
+        case TSTR:
+        case SIMPLE:
+            return;
+
+        case ARRAY:
+            std::for_each(item->asArray()->begin(), item->asArray()->end(),
+                          recursivelyCanonicalize);
+            return;
+
+        case MAP:
+            item->asMap()->canonicalize(true /* recurse */);
+            return;
+
+        case SEMANTIC:
+            // This can't happen.  SemanticTags delegate their type() method to the contained Item's
+            // type.
+            assert(false);
+            return;
+    }
+}
+
+Map& Map::canonicalize(bool recurse) & {
+    if (recurse) {
+        for (auto& entry : mEntries) {
+            recursivelyCanonicalize(entry.first);
+            recursivelyCanonicalize(entry.second);
+        }
+    }
+
+    if (size() < 2 || mCanonicalized) {
+        // Trivially or already canonical; do nothing.
+        return *this;
+    }
+
+    std::sort(begin(), end(),
+              [](auto& a, auto& b) { return keyLess(a.first.get(), b.first.get()); });
+    mCanonicalized = true;
+    return *this;
+}
+
+std::unique_ptr<Item> Map::clone() const {
+    auto res = std::make_unique<Map>();
+    for (auto& [key, value] : *this) {
+        res->add(key->clone(), value->clone());
+    }
+    res->mCanonicalized = mCanonicalized;
+    return res;
+}
+
+std::unique_ptr<Item> SemanticTag::clone() const {
+    return std::make_unique<SemanticTag>(mValue, mTaggedItem->clone());
+}
+
+uint8_t* SemanticTag::encode(uint8_t* pos, const uint8_t* end) const {
+    // Can't use the encodeHeader() method that calls type() to get the major type, since that will
+    // return the tagged Item's type.
+    pos = ::cppbor::encodeHeader(kMajorType, mValue, pos, end);
+    if (!pos) return nullptr;
+    return mTaggedItem->encode(pos, end);
+}
+
+void SemanticTag::encode(EncodeCallback encodeCallback) const {
+    // Can't use the encodeHeader() method that calls type() to get the major type, since that will
+    // return the tagged Item's type.
+    ::cppbor::encodeHeader(kMajorType, mValue, encodeCallback);
+    mTaggedItem->encode(encodeCallback);
+}
+
+size_t SemanticTag::semanticTagCount() const {
+    size_t levelCount = 1;  // Count this level.
+    const SemanticTag* cur = this;
+    while (cur->mTaggedItem && (cur = cur->mTaggedItem->asSemanticTag()) != nullptr) ++levelCount;
+    return levelCount;
+}
+
+uint64_t SemanticTag::semanticTag(size_t nesting) const {
+    // Getting the value of a specific nested tag is a bit tricky, because we start with the outer
+    // tag and don't know how many are inside.  We count the number of nesting levels to find out
+    // how many there are in total, then to get the one we want we have to walk down levelCount -
+    // nesting steps.
+    size_t levelCount = semanticTagCount();
+    if (nesting >= levelCount) return 0;
+
+    levelCount -= nesting;
+    const SemanticTag* cur = this;
+    while (--levelCount > 0) cur = cur->mTaggedItem->asSemanticTag();
+
+    return cur->mValue;
 }
 
 string prettyPrint(const Item* item, size_t maxBStrSize, const vector<string>& mapKeysToNotPrint) {
