@@ -36,6 +36,9 @@ using ParseResult = std::tuple<std::unique_ptr<Item> /* result */, const uint8_t
  */
 ParseResult parse(const uint8_t* begin, const uint8_t* end);
 
+// TODO: comment
+ParseResult parseWithViews(const uint8_t* begin, const uint8_t* end);
+
 /**
  * Parse the first CBOR data item (possibly compound) from the byte vector.
  *
@@ -66,6 +69,11 @@ inline ParseResult parse(const uint8_t* begin, size_t size) {
     return parse(begin, begin + size);
 }
 
+// TODO: comment
+inline ParseResult parseWithViews(const uint8_t* begin, size_t size) {
+    return parseWithViews(begin, begin + size);
+}
+
 /**
  * Parse the first CBOR data item (possibly compound) from the value contained in a Bstr.
  *
@@ -90,6 +98,9 @@ class ParseClient;
  * provided ParseClient when elements are found.
  */
 void parse(const uint8_t* begin, const uint8_t* end, ParseClient* parseClient);
+
+// TODO: comment
+void parseWithViews(const uint8_t* begin, const uint8_t* end, ParseClient* parseClient);
 
 /**
  * Parse the CBOR data in the vector in streaming fashion, calling methods on the
