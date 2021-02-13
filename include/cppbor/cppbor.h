@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <functional>
 #include <iterator>
@@ -65,6 +66,8 @@ class Map;
 class Null;
 class SemanticTag;
 class EncodedItem;
+class Tview;
+class Bview;
 
 /**
  * Returns the size of a CBOR header that contains the additional info value addlInfo.
@@ -128,6 +131,11 @@ class Item {
     const Map* asMap() const { return const_cast<Item*>(this)->asMap(); }
     virtual Array* asArray() { return nullptr; }
     const Array* asArray() const { return const_cast<Item*>(this)->asArray(); }
+
+    virtual Tview* asTview() { return nullptr; }
+    const Tview* asTview() const { return const_cast<Item*>(this)->asTview(); }
+    virtual Bview* asBview() { return nullptr; }
+    const Bview* asBview() const { return const_cast<Item*>(this)->asBview(); }
 
     // Like those above, these methods safely downcast an Item when it's actually a SemanticTag.
     // However, if you think you want to use these methods, you probably don't.  Typically, the way
@@ -409,6 +417,52 @@ class Bstr : public Item {
 };
 
 /**
+ * Bview is a read-only version of Bstr backed by std::string_view
+ */
+class Bview : public Item {
+  public:
+    static constexpr MajorType kMajorType = BSTR;
+
+    // Construct an empty Bview
+    explicit Bview() {}
+
+    // Construct from a string_view
+    explicit Bview(std::string_view v) : mView(std::move(v)) {}
+
+    // Construct from an iterator range
+    template <typename I1, typename I2,
+              typename = typename std::iterator_traits<I1>::iterator_category,
+              typename = typename std::iterator_traits<I2>::iterator_category>
+    Bview(I1 begin, I2 end) : mView(begin, end) {}
+
+    // Construct from a uint8_t pointer pair
+    Bview(const uint8_t* begin, const uint8_t* end)
+        : mView(reinterpret_cast<const char*>(begin),
+                std::distance(begin, end)) {}
+
+    bool operator==(const Bview& other) const& { return mView == other.mView; }
+
+    MajorType type() const override { return kMajorType; }
+    Bview* asBview() override { return this; }
+    size_t encodedSize() const override { return headerSize(mView.size()) + mView.size(); }
+    using Item::encode;
+    uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
+    void encode(EncodeCallback encodeCallback) const override {
+        encodeHeader(mView.size(), encodeCallback);
+        encodeValue(encodeCallback);
+    }
+
+    const std::string_view& view() const { return mView; }
+
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Bview>(mView); }
+
+  private:
+    void encodeValue(EncodeCallback encodeCallback) const;
+
+    std::string_view mView;
+};
+
+/**
  * Tstr is a concrete Item that implements major type 3.
  */
 class Tstr : public Item {
@@ -457,6 +511,52 @@ class Tstr : public Item {
     void encodeValue(EncodeCallback encodeCallback) const;
 
     std::string mValue;
+};
+
+/**
+ * Tview is a read-only version of Tstr backed by std::string_view
+ */
+class Tview : public Item {
+  public:
+    static constexpr MajorType kMajorType = TSTR;
+
+    // Construct an empty Tview
+    explicit Tview() {}
+
+    // Construct from a string_view
+    explicit Tview(std::string_view v) : mView(std::move(v)) {}
+
+    // Construct from an iterator range
+    template <typename I1, typename I2,
+              typename = typename std::iterator_traits<I1>::iterator_category,
+              typename = typename std::iterator_traits<I2>::iterator_category>
+    Tview(I1 begin, I2 end) : mView(begin, end) {}
+
+    // Construct from a uint8_t pointer pair
+    Tview(const uint8_t* begin, const uint8_t* end)
+        : mView(reinterpret_cast<const char*>(begin),
+                std::distance(begin, end)) {}
+
+    bool operator==(const Tview& other) const& { return mView == other.mView; }
+
+    MajorType type() const override { return kMajorType; }
+    Tview* asTview() override { return this; }
+    size_t encodedSize() const override { return headerSize(mView.size()) + mView.size(); }
+    using Item::encode;
+    uint8_t* encode(uint8_t* pos, const uint8_t* end) const override;
+    void encode(EncodeCallback encodeCallback) const override {
+        encodeHeader(mView.size(), encodeCallback);
+        encodeValue(encodeCallback);
+    }
+
+    const std::string_view& view() const { return mView; }
+
+    std::unique_ptr<Item> clone() const override { return std::make_unique<Tview>(mView); }
+
+  private:
+    void encodeValue(EncodeCallback encodeCallback) const;
+
+    std::string_view mView;
 };
 
 /*
@@ -686,6 +786,8 @@ class SemanticTag : public Item {
     Simple* asSimple() override { return mTaggedItem->asSimple(); }
     Map* asMap() override { return mTaggedItem->asMap(); }
     Array* asArray() override { return mTaggedItem->asArray(); }
+    Tview* asTview() override { return mTaggedItem->asTview(); }
+    Bview* asBview() override { return mTaggedItem->asBview(); }
 
     std::unique_ptr<Item> clone() const override;
 

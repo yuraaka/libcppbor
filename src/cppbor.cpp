@@ -353,6 +353,18 @@ void Bstr::encodeValue(EncodeCallback encodeCallback) const {
     }
 }
 
+uint8_t* Bview::encode(uint8_t* pos, const uint8_t* end) const {
+    pos = encodeHeader(mView.size(), pos, end);
+    if (!pos || end - pos < static_cast<ptrdiff_t>(mView.size())) return nullptr;
+    return std::copy(mView.begin(), mView.end(), pos);
+}
+
+void Bview::encodeValue(EncodeCallback encodeCallback) const {
+    for (auto c : mView) {
+        encodeCallback(static_cast<uint8_t>(c));
+    }
+}
+
 uint8_t* Tstr::encode(uint8_t* pos, const uint8_t* end) const {
     pos = encodeHeader(mValue.size(), pos, end);
     if (!pos || end - pos < static_cast<ptrdiff_t>(mValue.size())) return nullptr;
@@ -361,6 +373,18 @@ uint8_t* Tstr::encode(uint8_t* pos, const uint8_t* end) const {
 
 void Tstr::encodeValue(EncodeCallback encodeCallback) const {
     for (auto c : mValue) {
+        encodeCallback(static_cast<uint8_t>(c));
+    }
+}
+
+uint8_t* Tview::encode(uint8_t* pos, const uint8_t* end) const {
+    pos = encodeHeader(mView.size(), pos, end);
+    if (!pos || end - pos < static_cast<ptrdiff_t>(mView.size())) return nullptr;
+    return std::copy(mView.begin(), mView.end(), pos);
+}
+
+void Tview::encodeValue(EncodeCallback encodeCallback) const {
+    for (auto c : mView) {
         encodeCallback(static_cast<uint8_t>(c));
     }
 }
