@@ -1,0 +1,12 @@
+Presubmit-Verified+2: Treehugger Robot <treehugger-gerrit@google.com>
+Lint+1: Lint 🤖 <ayeaye-gerrit@google.com>
+Code-Review+2: Bob Badour <bbadour@google.com>
+Open-Source-Licensing+2: Bob Badour <bbadour@google.com>
+Global-Approval+1: Bob Badour <bbadour@google.com>
+Autosubmit+1: Bob Badour <bbadour@google.com>
+Build-Cop-Override+1: Bob Badour <bbadour@google.com>
+Submitted-by: Treehugger Robot <treehugger-gerrit@google.com>
+Submitted-at: Wed, 17 Feb 2021 15:33:54 +0000
+Reviewed-on: https://android-review.googlesource.com/c/platform/external/libcppbor/+/1588871
+Project: platform/external/libcppbor
+Branch: refs/heads/master
