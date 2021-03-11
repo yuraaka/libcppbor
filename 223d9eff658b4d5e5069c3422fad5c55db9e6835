@@ -89,6 +89,30 @@
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "26abc2cf_db4905f6",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 1638873
+      },
+      "writtenOn": "2021-03-11T22:59:43Z",
+      "side": 1,
+      "message": "Looks like basic_string_view\u003cuint8_t\u003e with an explicit constructor works too, so I added that.",
+      "parentUuid": "1309ceb5_055d12c2",
+      "range": {
+        "startLine": 420,
+        "startChar": 53,
+        "endLine": 420,
+        "endChar": 69
+      },
+      "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9317e56e_a1f084b9",
