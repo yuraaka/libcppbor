@@ -74,6 +74,24 @@
       "parentUuid": "9317e56e_a1f084b9",
       "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ac76b814_e9bae8e4",
+        "filename": "rules.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1076971
+      },
+      "writtenOn": "2021-03-11T22:38:36Z",
+      "side": 1,
+      "message": "I see, thanks.",
+      "parentUuid": "4b6ed880_77e7b518",
+      "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
   ]
 }
