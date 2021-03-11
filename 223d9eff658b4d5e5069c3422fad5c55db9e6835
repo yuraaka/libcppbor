@@ -56,6 +56,24 @@
       "message": "No need to add empty line here (bet it was inserted automatically by your text editor).",
       "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4b6ed880_77e7b518",
+        "filename": "rules.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1000205
+      },
+      "writtenOn": "2021-03-11T22:32:18Z",
+      "side": 1,
+      "message": "There is no empty line here (see https://android.googlesource.com/platform/external/libcppbor/+/refs/changes/92/1588192/8/rules.mk). Gerrit seem to be showing it as an empty line since the original file was missing the line terminator. I agree that this file does not need to be touched as part of this change though.",
+      "parentUuid": "9317e56e_a1f084b9",
+      "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
   ]
 }
