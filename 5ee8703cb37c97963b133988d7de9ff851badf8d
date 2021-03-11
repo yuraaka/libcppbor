@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "f7cefcd3_9c6bdcb0",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 10
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1076971
+      },
+      "writtenOn": "2021-03-11T23:03:46Z",
+      "side": 1,
+      "message": "Needs update now that ViewBstr holds a basic_string_view\u003cuint8_t\u003e.",
+      "range": {
+        "startLine": 9,
+        "startChar": 0,
+        "endLine": 10,
+        "endChar": 12
+      },
+      "revId": "5ee8703cb37c97963b133988d7de9ff851badf8d",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "b2142e44_fdb71e4e",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 10
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1076971
+      },
+      "writtenOn": "2021-03-11T23:03:46Z",
+      "side": 1,
+      "message": "OK, sounds good to me. One quick nit in the commit message and this should be ready to go.",
+      "revId": "5ee8703cb37c97963b133988d7de9ff851badf8d",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
