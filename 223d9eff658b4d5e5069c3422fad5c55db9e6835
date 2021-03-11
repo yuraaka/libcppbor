@@ -43,6 +43,30 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "25e9f605_79636c3e",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 1638873
+      },
+      "writtenOn": "2021-03-11T22:41:37Z",
+      "side": 1,
+      "message": "Ideally this would be std::span\u003cuint8_t\u003e, but that is only available in C++20.\n\nI think std::basic_string_view\u003cuint8_t\u003e could work, but you lose some nice features like building a ViewBstr directly from a C string, e.g., ViewBstr(\"foo\"). You\u0027d have to build a uint8_t[] array and the pass that to the basic_string_view constructor along with the size.\n\nOn the other hand, regular Bstr can be constructed from a regular std::string because it has a separate Bstr constructor that takes a std::string. Maybe that would work for ViewBstr too. I\u0027ll give it a try.",
+      "parentUuid": "65fc21d2_4e4702fb",
+      "range": {
+        "startLine": 420,
+        "startChar": 53,
+        "endLine": 420,
+        "endChar": 69
+      },
+      "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "9317e56e_a1f084b9",
         "filename": "rules.mk",
         "patchSetId": 8
@@ -90,6 +114,24 @@
       "side": 1,
       "message": "I see, thanks.",
       "parentUuid": "4b6ed880_77e7b518",
+      "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "df3e613b_29d41ecb",
+        "filename": "rules.mk",
+        "patchSetId": 8
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1638873
+      },
+      "writtenOn": "2021-03-11T22:41:37Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9317e56e_a1f084b9",
       "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
