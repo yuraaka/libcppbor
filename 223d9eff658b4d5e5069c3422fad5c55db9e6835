@@ -65,6 +65,30 @@
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1309ceb5_055d12c2",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 8
+      },
+      "lineNbr": 420,
+      "author": {
+        "id": 1076971
+      },
+      "writtenOn": "2021-03-11T22:50:11Z",
+      "side": 1,
+      "message": "OK, I\u0027m a big fan of ergonomics so SGTM to just use std::string_view for now. We can always change it later!",
+      "parentUuid": "25e9f605_79636c3e",
+      "range": {
+        "startLine": 420,
+        "startChar": 53,
+        "endLine": 420,
+        "endChar": 69
+      },
+      "revId": "223d9eff658b4d5e5069c3422fad5c55db9e6835",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "9317e56e_a1f084b9",
