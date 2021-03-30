@@ -182,6 +182,12 @@ std::tuple<const uint8_t*, ParseClient*> handleCompound(
         std::unique_ptr<Item> item, uint64_t entryCount, const uint8_t* hdrBegin,
         const uint8_t* valueBegin, const uint8_t* end, const std::string& typeName,
         bool emitViews, ParseClient* parseClient) {
+    // TODO: this is done hackily, will want a better defined bound or Item::max_size()
+    if (entryCount > 1000) {
+        parseClient->error(hdrBegin, "Compound item too large.");
+        return {hdrBegin, nullptr};
+    }
+
     parseClient =
             parseClient->item(item, hdrBegin, valueBegin, valueBegin /* don't know the end yet */);
     if (!parseClient) return {hdrBegin, nullptr};

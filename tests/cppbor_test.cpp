@@ -1752,6 +1752,16 @@ TEST(FullParserTest, FloatingPointValue) {
     EXPECT_EQ("Unsupported floating-point or simple value.", message);
 }
 
+TEST(FullParserTest, HugeArray) {
+    vector<uint8_t> hugeArray = {0x9B, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                 0xFF, 0xFF, 0xF1, 0x00, 0x01, 0x02};
+
+    auto [item, pos, message] = parse(hugeArray);
+
+    // TODO: minimum expectation is that it reaches here
+    EXPECT_TRUE(true);
+}
+
 TEST(MapGetValueByKeyTest, Map) {
     Array compoundItem(1, 2, 3, 4, 5, Map(4, 5, "a", "b"));
     auto clone = compoundItem.clone();
