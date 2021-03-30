@@ -40,8 +40,9 @@ std::string insufficientLengthString(size_t bytesNeeded, size_t bytesAvail,
 template <typename T, typename = std::enable_if_t<std::is_unsigned_v<T>>>
 std::tuple<bool, uint64_t, const uint8_t*> parseLength(const uint8_t* pos, const uint8_t* end,
                                                        ParseClient* parseClient) {
-    if (pos + sizeof(T) > end) {
-        parseClient->error(pos - 1, insufficientLengthString(sizeof(T), end - pos, "length field"));
+    size_t remaining = std::distance(pos, end);
+    if (remaining < sizeof(T)) {
+        parseClient->error(pos - 1, insufficientLengthString(sizeof(T), remaining, "length field"));
         return {false, 0, pos};
     }
 
@@ -71,7 +72,7 @@ std::tuple<const uint8_t*, ParseClient*> handleNint(uint64_t value, const uint8_
         parseClient->error(hdrBegin, "NINT values that don't fit in int64_t are not supported.");
         return {hdrBegin, nullptr /* end parsing */};
     }
-    std::unique_ptr<Item> item = std::make_unique<Nint>(-1 - static_cast<uint64_t>(value));
+    std::unique_ptr<Item> item = std::make_unique<Nint>(-1 - value);
     return {hdrEnd,
             parseClient->item(item, hdrBegin, hdrEnd /* valueBegin */, hdrEnd /* itemEnd */)};
 }
@@ -96,8 +97,9 @@ std::tuple<const uint8_t*, ParseClient*> handleString(uint64_t length, const uin
                                                       const uint8_t* valueBegin, const uint8_t* end,
                                                       const std::string& errLabel,
                                                       ParseClient* parseClient) {
-    if (end - valueBegin < static_cast<ssize_t>(length)) {
-        parseClient->error(hdrBegin, insufficientLengthString(length, end - valueBegin, errLabel));
+    size_t remaining = std::distance(valueBegin, end);
+    if (remaining < length) {
+        parseClient->error(hdrBegin, insufficientLengthString(length, remaining, errLabel));
         return {hdrBegin, nullptr /* end parsing */};
     }
 
