@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "03754f12_efd975bc",
+        "filename": "src/cppbor_parse.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1139038
+      },
+      "writtenOn": "2021-03-30T16:49:14Z",
+      "side": 1,
+      "message": "This isn\u0027t the right way to do it but you might have an opinion on the way that would best fit the library.",
+      "revId": "bedc33aba9fe13fea4998234360b6679768c0e57",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
