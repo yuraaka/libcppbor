@@ -3,6 +3,29 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "8b0317f0_61b340a8",
+        "filename": "src/cppbor_parse.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 1139038
+      },
+      "writtenOn": "2021-04-01T13:40:09Z",
+      "side": 1,
+      "message": "Seems it wants a check on `length` here so vector in the BStr doesn\u0027t throw a length_error too.",
+      "range": {
+        "startLine": 104,
+        "startChar": 38,
+        "endLine": 104,
+        "endChar": 52
+      },
+      "revId": "bedc33aba9fe13fea4998234360b6679768c0e57",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "03754f12_efd975bc",
         "filename": "src/cppbor_parse.cpp",
         "patchSetId": 2
