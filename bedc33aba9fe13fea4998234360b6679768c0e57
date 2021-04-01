@@ -20,6 +20,24 @@
     {
       "unresolved": true,
       "key": {
+        "uuid": "4c372ed8_ea53c4e0",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1139038
+      },
+      "writtenOn": "2021-04-01T14:39:59Z",
+      "side": 1,
+      "message": "It\u0027s only vector\u003c\u003e::max_size() in certain cases but really depends on the ParserClient. In the case I saw failing, FullParserClient tried to make an instance of a Map subclass which happens to be implemented with std::vector. There\u0027re layers of abstraction in the API that hide what the right value is. This CL was mainly to point to where the problem was and see what you want the library\u0027s API to look like.",
+      "parentUuid": "4469d2a3_3389ddd2",
+      "revId": "bedc33aba9fe13fea4998234360b6679768c0e57",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
         "uuid": "8b0317f0_61b340a8",
         "filename": "src/cppbor_parse.cpp",
         "patchSetId": 2
