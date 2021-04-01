@@ -1,6 +1,23 @@
 {
   "comments": [
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "4469d2a3_3389ddd2",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2021-04-01T14:16:59Z",
+      "side": 1,
+      "message": "Why not set the limit to vector\u003c\u003e::max_size()?",
+      "revId": "bedc33aba9fe13fea4998234360b6679768c0e57",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "8b0317f0_61b340a8",
