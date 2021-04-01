@@ -74,6 +74,24 @@
       "message": "This isn\u0027t the right way to do it but you might have an opinion on the way that would best fit the library.",
       "revId": "bedc33aba9fe13fea4998234360b6679768c0e57",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "cfd3be63_2999d4c7",
+        "filename": "src/cppbor_parse.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1043663
+      },
+      "writtenOn": "2021-04-01T19:42:54Z",
+      "side": 1,
+      "message": "What would best fit, I think, is to diagnose an error in ParseClient::item() and return a nullptr.  Maybe IncompleteItem::add() should return a bool to indicate success, so ParseClient::item() can see the failure and return nullptr.  Actually determining whether the vector\u003c\u003e::reserve succeeded may be problematic, but at least in Linux and Trusty I don\u0027t think there\u0027s anything we can usefully do in the event of out-of-memory other than crash.",
+      "parentUuid": "03754f12_efd975bc",
+      "revId": "bedc33aba9fe13fea4998234360b6679768c0e57",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
   ]
 }
