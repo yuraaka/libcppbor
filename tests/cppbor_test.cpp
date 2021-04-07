@@ -1714,6 +1714,44 @@ TEST(FullParserTest, ViewBstr) {
     EXPECT_THAT(item, MatchesItem(val));
 }
 
+TEST(FullParserTest, ReservedAdditionalInformation) {
+    vector<uint8_t> reservedVal = {0x1D};
+
+    auto [item, pos, message] = parse(reservedVal);
+    EXPECT_THAT(item, IsNull());
+    EXPECT_EQ(pos, reservedVal.data());
+    EXPECT_EQ("Reserved additional information value or unsupported indefinite length item.",
+              message);
+}
+
+TEST(FullParserTest, IndefiniteArray) {
+    vector<uint8_t> indefiniteArray = {0x7F};
+
+    auto [item, pos, message] = parse(indefiniteArray);
+    EXPECT_THAT(item, IsNull());
+    EXPECT_EQ(pos, indefiniteArray.data());
+    EXPECT_EQ("Reserved additional information value or unsupported indefinite length item.",
+              message);
+}
+
+TEST(FullParserTest, UnassignedSimpleValue) {
+    vector<uint8_t> unassignedSimpleValue = {0xE5};
+
+    auto [item, pos, message] = parse(unassignedSimpleValue);
+    EXPECT_THAT(item, IsNull());
+    EXPECT_EQ(pos, unassignedSimpleValue.data());
+    EXPECT_EQ("Unsupported floating-point or simple value.", message);
+}
+
+TEST(FullParserTest, FloatingPointValue) {
+    vector<uint8_t> floatingPointValue = {0xFA, 0x12, 0x75, 0x34, 0x37};
+
+    auto [item, pos, message] = parse(floatingPointValue);
+    EXPECT_THAT(item, IsNull());
+    EXPECT_EQ(pos, floatingPointValue.data());
+    EXPECT_EQ("Unsupported floating-point or simple value.", message);
+}
+
 TEST(MapGetValueByKeyTest, Map) {
     Array compoundItem(1, 2, 3, 4, 5, Map(4, 5, "a", "b"));
     auto clone = compoundItem.clone();
