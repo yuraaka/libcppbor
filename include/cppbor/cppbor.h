@@ -199,7 +199,7 @@ class Item {
     /**
      * Clones the Item
      */
-    virtual std::unique_ptr<Item> clone() const = 0;
+    std::unique_ptr<Item> clone() const { return std::unique_ptr<Item>(clone_impl()); }
 
     /**
      * Encodes the Item into the provided OutputIterator.
@@ -243,6 +243,9 @@ class Item {
     inline void encodeHeader(uint64_t addlInfo, EncodeCallback encodeCallback) const {
         ::cppbor::encodeHeader(type(), addlInfo, encodeCallback);
     }
+
+  private:
+    virtual Item* clone_impl() const = 0;
 };
 
 /**
@@ -270,9 +273,12 @@ class EncodedItem : public Item {
     void encode(EncodeCallback encodeCallback) const override {
         std::for_each(mValue.begin(), mValue.end(), encodeCallback);
     }
-    std::unique_ptr<Item> clone() const override { return std::make_unique<EncodedItem>(mValue); }
+    std::unique_ptr<EncodedItem> clone() const {
+        return std::unique_ptr<EncodedItem>(clone_impl());
+    }
 
   private:
+    EncodedItem* clone_impl() const override { return new EncodedItem(mValue); }
     std::vector<uint8_t> mValue;
 };
 
@@ -317,9 +323,11 @@ class Uint : public Int {
         encodeHeader(mValue, encodeCallback);
     }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<Uint>(mValue); }
+    std::unique_ptr<Uint> clone() const { return std::unique_ptr<Uint>(clone_impl()); }
 
   private:
+    Uint* clone_impl() const override { return new Uint(mValue); }
+
     uint64_t mValue;
 };
 
@@ -354,9 +362,10 @@ class Nint : public Int {
         encodeHeader(addlInfo(), encodeCallback);
     }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<Nint>(mValue); }
+    std::unique_ptr<Nint> clone() const { return std::unique_ptr<Nint>(clone_impl()); }
 
   private:
+    Nint* clone_impl() const override { return new Nint(mValue); }
     uint64_t addlInfo() const { return -1ll - mValue; }
 
     int64_t mValue;
@@ -412,9 +421,10 @@ class Bstr : public Item {
     const std::vector<uint8_t>& value() const { return mValue; }
     std::vector<uint8_t>&& moveValue() { return std::move(mValue); }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<Bstr>(mValue); }
+    std::unique_ptr<Bstr> clone() const { return std::unique_ptr<Bstr>(clone_impl()); }
 
   private:
+    Bstr* clone_impl() const override { return new Bstr(mValue); }
     void encodeValue(EncodeCallback encodeCallback) const;
 
     std::vector<uint8_t> mValue;
@@ -444,8 +454,7 @@ class ViewBstr : public Item {
     ViewBstr(I1 begin, I2 end) : mView(begin, end) {}
 
     // Construct from a uint8_t pointer pair
-    ViewBstr(const uint8_t* begin, const uint8_t* end)
-        : mView(begin, std::distance(begin, end)) {}
+    ViewBstr(const uint8_t* begin, const uint8_t* end) : mView(begin, std::distance(begin, end)) {}
 
     bool operator==(const ViewBstr& other) const& { return mView == other.mView; }
 
@@ -462,9 +471,10 @@ class ViewBstr : public Item {
 
     const std::basic_string_view<uint8_t>& view() const { return mView; }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<ViewBstr>(mView); }
+    std::unique_ptr<ViewBstr> clone() const { return std::unique_ptr<ViewBstr>(clone_impl()); }
 
   private:
+    ViewBstr* clone_impl() const { return new ViewBstr(mView); }
     void encodeValue(EncodeCallback encodeCallback) const;
 
     std::basic_string_view<uint8_t> mView;
@@ -514,9 +524,10 @@ class Tstr : public Item {
     const std::string& value() const { return mValue; }
     std::string&& moveValue() { return std::move(mValue); }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<Tstr>(mValue); }
+    std::unique_ptr<Tstr> clone() const { return std::unique_ptr<Tstr>(clone_impl()); }
 
   private:
+    Tstr* clone_impl() const override { return new Tstr(mValue); }
     void encodeValue(EncodeCallback encodeCallback) const;
 
     std::string mValue;
@@ -543,8 +554,7 @@ class ViewTstr : public Item {
 
     // Construct from a uint8_t pointer pair
     ViewTstr(const uint8_t* begin, const uint8_t* end)
-        : mView(reinterpret_cast<const char*>(begin),
-                std::distance(begin, end)) {}
+        : mView(reinterpret_cast<const char*>(begin), std::distance(begin, end)) {}
 
     bool operator==(const ViewTstr& other) const& { return mView == other.mView; }
 
@@ -561,9 +571,10 @@ class ViewTstr : public Item {
 
     const std::string_view& view() const { return mView; }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<ViewTstr>(mView); }
+    std::unique_ptr<ViewTstr> clone() const { return std::unique_ptr<ViewTstr>(clone_impl()); }
 
   private:
+    ViewTstr* clone_impl() const override { return new ViewTstr(mView); }
     void encodeValue(EncodeCallback encodeCallback) const;
 
     std::string_view mView;
@@ -628,7 +639,7 @@ class Array : public Item {
     using Item::asArray;
     Array* asArray() override { return this; }
 
-    std::unique_ptr<Item> clone() const override;
+    std::unique_ptr<Array> clone() const { return std::unique_ptr<Array>(clone_impl()); }
 
     auto begin() { return mEntries.begin(); }
     auto begin() const { return mEntries.begin(); }
@@ -636,6 +647,7 @@ class Array : public Item {
     auto end() const { return mEntries.end(); }
 
   protected:
+    Array* clone_impl() const override;
     std::vector<std::unique_ptr<Item>> mEntries;
 };
 
@@ -734,7 +746,7 @@ class Map : public Item {
 
     bool isCanonical() { return mCanonicalized; }
 
-    std::unique_ptr<Item> clone() const override;
+    std::unique_ptr<Map> clone() const { return std::unique_ptr<Map>(clone_impl()); }
 
     auto begin() {
         mCanonicalized = false;
@@ -751,6 +763,7 @@ class Map : public Item {
     static bool keyLess(const Item* a, const Item* b);
 
   protected:
+    Map* clone_impl() const override;
     std::vector<entry_type> mEntries;
 
   private:
@@ -763,6 +776,8 @@ class SemanticTag : public Item {
 
     template <typename T>
     SemanticTag(uint64_t tagValue, T&& taggedItem);
+    SemanticTag(uint64_t value, std::unique_ptr<Item> taggedItem)
+        : mValue(value), mTaggedItem(std::move(taggedItem)) {}
     SemanticTag(const SemanticTag& other) = delete;
     SemanticTag(SemanticTag&&) = default;
     SemanticTag& operator=(const SemanticTag& other) = delete;
@@ -812,7 +827,9 @@ class SemanticTag : public Item {
     using Item::asViewBstr;
     ViewBstr* asViewBstr() override { return mTaggedItem->asViewBstr(); }
 
-    std::unique_ptr<Item> clone() const override;
+    std::unique_ptr<SemanticTag> clone() const {
+        return std::unique_ptr<SemanticTag>(clone_impl());
+    }
 
     size_t semanticTagCount() const override;
     uint64_t semanticTag(size_t nesting = 0) const override;
@@ -820,6 +837,11 @@ class SemanticTag : public Item {
   protected:
     SemanticTag() = default;
     SemanticTag(uint64_t value) : mValue(value) {}
+
+    SemanticTag* clone_impl() const override {
+        return new SemanticTag(mValue, mTaggedItem->clone());
+    }
+
     uint64_t mValue;
     std::unique_ptr<Item> mTaggedItem;
 };
@@ -870,9 +892,10 @@ class Bool : public Simple {
 
     bool value() const { return mValue; }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<Bool>(mValue); }
+    std::unique_ptr<Bool> clone() const { return std::unique_ptr<Bool>(clone_impl()); }
 
   private:
+    Bool* clone_impl() const override { return new Bool(mValue); }
     bool mValue;
 };
 
@@ -898,7 +921,10 @@ class Null : public Simple {
         encodeHeader(NULL_V, encodeCallback);
     }
 
-    std::unique_ptr<Item> clone() const override { return std::make_unique<Null>(); }
+    std::unique_ptr<Null> clone() const { return std::unique_ptr<Null>(clone_impl()); }
+
+  private:
+    Null* clone_impl() const override { return new Null(); }
 };
 
 /**

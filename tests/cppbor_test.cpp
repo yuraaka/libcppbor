@@ -965,37 +965,41 @@ TEST(ConvertTest, ViewBstr) {
 TEST(CloningTest, Uint) {
     Uint item(10);
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Uint>, decltype(clone)>();
     EXPECT_EQ(clone->type(), UINT);
     EXPECT_NE(clone->asUint(), nullptr);
-    EXPECT_EQ(item, *clone->asUint());
-    EXPECT_EQ(*clone->asUint(), Uint(10));
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, Uint(10));
 }
 
 TEST(CloningTest, Nint) {
     Nint item(-1000000);
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Nint>, decltype(clone)>();
     EXPECT_EQ(clone->type(), NINT);
     EXPECT_NE(clone->asNint(), nullptr);
-    EXPECT_EQ(item, *clone->asNint());
-    EXPECT_EQ(*clone->asNint(), Nint(-1000000));
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, Nint(-1000000));
 }
 
 TEST(CloningTest, Tstr) {
     Tstr item("qwertyasdfgh");
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Tstr>, decltype(clone)>();
     EXPECT_EQ(clone->type(), TSTR);
     EXPECT_NE(clone->asTstr(), nullptr);
-    EXPECT_EQ(item, *clone->asTstr());
-    EXPECT_EQ(*clone->asTstr(), Tstr("qwertyasdfgh"));
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, Tstr("qwertyasdfgh"));
 }
 
 TEST(CloningTest, Bstr) {
     Bstr item(std::vector<uint8_t>{1, 2, 3, 255, 0});
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Bstr>, decltype(clone)>();
     EXPECT_EQ(clone->type(), BSTR);
     EXPECT_NE(clone->asBstr(), nullptr);
-    EXPECT_EQ(item, *clone->asBstr());
-    EXPECT_EQ(*clone->asBstr(), Bstr(std::vector<uint8_t>{1, 2, 3, 255, 0}));
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, Bstr(std::vector<uint8_t>{1, 2, 3, 255, 0}));
 }
 
 TEST(CloningTest, Array) {
@@ -1004,6 +1008,7 @@ TEST(CloningTest, Array) {
             copy(-1000000, 22222222, "item", Map(1, 2, 4, Array(1, "das", true, nullptr)),
                  SemanticTag(16, "DATA"));
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Array>, decltype(clone)>();
     EXPECT_EQ(clone->type(), ARRAY);
     EXPECT_NE(clone->asArray(), nullptr);
     EXPECT_EQ(item, *clone->asArray());
@@ -1011,35 +1016,38 @@ TEST(CloningTest, Array) {
 }
 
 TEST(CloningTest, Map) {
-    Map item("key", Array("value1", "value2", 3), 15, Null(), -5, 45),
-            copy("key", Array("value1", "value2", 3), 15, Null(), -5, 45);
+    Map item("key", Array("value1", "value2", 3), 15, Null(), -5, 45);
+    Map copy("key", Array("value1", "value2", 3), 15, Null(), -5, 45);
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Map>, decltype(clone)>();
     EXPECT_EQ(clone->type(), MAP);
     EXPECT_NE(clone->asMap(), nullptr);
-    EXPECT_EQ(item, *clone->asMap());
-    EXPECT_EQ(*clone->asMap(), copy);
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, copy);
 }
 
 TEST(CloningTest, Bool) {
     Bool item(true);
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Bool>, decltype(clone)>();
     EXPECT_EQ(clone->type(), SIMPLE);
     EXPECT_NE(clone->asSimple(), nullptr);
     EXPECT_EQ(clone->asSimple()->simpleType(), BOOLEAN);
     EXPECT_NE(clone->asSimple()->asBool(), nullptr);
-    EXPECT_EQ(item, *clone->asSimple()->asBool());
-    EXPECT_EQ(*clone->asSimple()->asBool(), Bool(true));
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, Bool(true));
 }
 
 TEST(CloningTest, Null) {
     Null item;
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<Null>, decltype(clone)>();
     EXPECT_EQ(clone->type(), SIMPLE);
     EXPECT_NE(clone->asSimple(), nullptr);
     EXPECT_EQ(clone->asSimple()->simpleType(), NULL_T);
     EXPECT_NE(clone->asSimple()->asNull(), nullptr);
-    EXPECT_EQ(item, *clone->asSimple()->asNull());
-    EXPECT_EQ(*clone->asSimple()->asNull(), Null());
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, Null());
 }
 
 TEST(CloningTest, SemanticTag) {
@@ -1047,10 +1055,11 @@ TEST(CloningTest, SemanticTag) {
     SemanticTag copy(96, Array(1, 2, 3, "entry", Map("key", "value")));
 
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<SemanticTag>, decltype(clone)>();
     EXPECT_EQ(clone->type(), ARRAY);
     EXPECT_NE(clone->asSemanticTag(), nullptr);
-    EXPECT_EQ(item, *clone->asSemanticTag());
-    EXPECT_EQ(*clone->asSemanticTag(), copy);
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, copy);
 }
 
 TEST(CloningTest, NestedSemanticTag) {
@@ -1064,19 +1073,21 @@ TEST(CloningTest, NestedSemanticTag) {
                                              Array(1, 2, 3, "entry", Map("key", "value")))));
 
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<SemanticTag>, decltype(clone)>();
     EXPECT_EQ(clone->type(), ARRAY);
     EXPECT_NE(clone->asSemanticTag(), nullptr);
-    EXPECT_EQ(item, *clone->asSemanticTag());
-    EXPECT_EQ(*clone->asSemanticTag(), copy);
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, copy);
 }
 
 TEST(CloningTest, ViewTstr) {
     ViewTstr item("qwertyasdfgh");
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<ViewTstr>, decltype(clone)>();
     EXPECT_EQ(clone->type(), TSTR);
     EXPECT_NE(clone->asViewTstr(), nullptr);
-    EXPECT_EQ(item, *clone->asViewTstr());
-    EXPECT_EQ(*clone->asViewTstr(), ViewTstr("qwertyasdfgh"));
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, ViewTstr("qwertyasdfgh"));
 }
 
 TEST(CloningTest, ViewBstr) {
@@ -1084,10 +1095,11 @@ TEST(CloningTest, ViewBstr) {
     basic_string_view sv(vec.data(), vec.size());
     ViewBstr item(sv);
     auto clone = item.clone();
+    testing::StaticAssertTypeEq<std::unique_ptr<ViewBstr>, decltype(clone)>();
     EXPECT_EQ(clone->type(), BSTR);
     EXPECT_NE(clone->asViewBstr(), nullptr);
-    EXPECT_EQ(item, *clone->asViewBstr());
-    EXPECT_EQ(*clone->asViewBstr(), ViewBstr(sv));
+    EXPECT_EQ(item, *clone);
+    EXPECT_EQ(*clone, ViewBstr(sv));
 }
 
 TEST(PrettyPrintingTest, NestedSemanticTag) {
@@ -1775,6 +1787,12 @@ TEST(EmptyBstrTest, Bstr) {
     auto [obj, pos, message] = parse(encoding.data(), encoding.size());
     EXPECT_NE(obj.get(), nullptr);
     EXPECT_EQ(*obj, bstr);
+}
+
+TEST(Move, ArrayMoveClone) {
+    Array array(1, 2, 3, "hello", -4);
+    Array dest = std::move(*array.clone());
+    EXPECT_EQ(dest, array);
 }
 
 TEST(ArrayIterationTest, EmptyArray) {

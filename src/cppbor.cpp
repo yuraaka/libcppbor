@@ -451,8 +451,8 @@ void Array::encode(EncodeCallback encodeCallback) const {
     }
 }
 
-std::unique_ptr<Item> Array::clone() const {
-    auto res = std::make_unique<Array>();
+Array* Array::clone_impl() const {
+    auto res = new Array;
     for (size_t i = 0; i < mEntries.size(); i++) {
         res->add(mEntries[i]->clone());
     }
@@ -549,17 +549,13 @@ Map& Map::canonicalize(bool recurse) & {
     return *this;
 }
 
-std::unique_ptr<Item> Map::clone() const {
-    auto res = std::make_unique<Map>();
+Map* Map::clone_impl() const {
+    auto res = new Map;
     for (auto& [key, value] : *this) {
         res->add(key->clone(), value->clone());
     }
     res->mCanonicalized = mCanonicalized;
     return res;
-}
-
-std::unique_ptr<Item> SemanticTag::clone() const {
-    return std::make_unique<SemanticTag>(mValue, mTaggedItem->clone());
 }
 
 uint8_t* SemanticTag::encode(uint8_t* pos, const uint8_t* end) const {
