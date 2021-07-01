@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "7ab30b40_59f2299b",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 598,
+      "author": {
+        "id": 1833664
+      },
+      "writtenOn": "2021-07-01T15:46:00Z",
+      "side": 1,
+      "message": "It occurs to me this morning that we still have one minor issue with this style: it\u0027s not possible to create an array containing an array with the constructors:\n  Array a(Array(Int(1))); // won\u0027t work\n\nIf anyone thinks this is problematic (I\u0027m not sure it is), then we can introduce a new factory function to create an array from variadic template args:\n  Array a \u003d Array::create(Array::create(Int(1));\n\nThe syntax is, IMO, rather ugly/verbose. The alternative is that we just accept this wart and if someone needs an array of arrays, they just...\n  Array a \u003d Array().add(Array(Int(1));",
+      "range": {
+        "startLine": 597,
+        "startChar": 0,
+        "endLine": 598,
+        "endChar": 26
+      },
+      "revId": "b0c9795e040ef73f9d2cf5b44a104dd99d531644",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
