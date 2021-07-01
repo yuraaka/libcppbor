@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d5e29254_3fd6829a",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 278,
+      "author": {
+        "id": 1833664
+      },
+      "writtenOn": "2021-07-01T00:34:32Z",
+      "side": 1,
+      "message": "Suggestion: add a templatized base type to include this implementation. e.g.\n\ntemplate \u003ctypename ItemT\u003e class ClonableItem : public Item {\npublic:\n  std::unique_ptr\u003cItemT\u003e clone() const {\n    return std::unique_ptr\u003cItemT\u003e(clone_impl()); }\n};\n\nclass EncodedItem : public ClonableItem\u003cEncodedItem\u003e ...",
+      "range": {
+        "startLine": 276,
+        "startChar": 0,
+        "endLine": 278,
+        "endChar": 5
+      },
+      "revId": "f1fe04b3ae9f9dd3883d37890d033c9924121cd0",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
