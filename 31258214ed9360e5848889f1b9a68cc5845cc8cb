@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "a1b41c0e_cba4499c",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1678423
+      },
+      "writtenOn": "2022-01-21T01:53:04Z",
+      "side": 1,
+      "message": "This ports a CL that is already merged in internal branch.",
+      "revId": "31258214ed9360e5848889f1b9a68cc5845cc8cb",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
