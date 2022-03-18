@@ -24,6 +24,30 @@
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "1d921940_3bde0155",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1937166
+      },
+      "writtenOn": "2022-03-18T23:37:26Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d56474d6_13e8298b",
+      "range": {
+        "startLine": 7,
+        "startChar": 47,
+        "endLine": 7,
+        "endChar": 61
+      },
+      "revId": "15e91bcd9004528522a8e31bd80f01fe5a8653fb",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "3c5db829_c1e55ab0",
@@ -37,6 +61,30 @@
       "writtenOn": "2022-03-18T23:26:26Z",
       "side": 1,
       "message": "I don\u0027t think we need this line. This was only for debugging, IIRC.",
+      "range": {
+        "startLine": 1717,
+        "startChar": 4,
+        "endLine": 1717,
+        "endChar": 66
+      },
+      "revId": "15e91bcd9004528522a8e31bd80f01fe5a8653fb",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "95e6bfda_0622d5c1",
+        "filename": "tests/cppbor_test.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1717,
+      "author": {
+        "id": 1937166
+      },
+      "writtenOn": "2022-03-18T23:37:26Z",
+      "side": 1,
+      "message": "it was for debugging but I think we can still use this for confirmation.",
+      "parentUuid": "3c5db829_c1e55ab0",
       "range": {
         "startLine": 1717,
         "startChar": 4,
