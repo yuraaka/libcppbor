@@ -93,6 +93,30 @@
       },
       "revId": "15e91bcd9004528522a8e31bd80f01fe5a8653fb",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "ba56f573_f7798280",
+        "filename": "tests/cppbor_test.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1717,
+      "author": {
+        "id": 1833664
+      },
+      "writtenOn": "2022-03-18T23:38:24Z",
+      "side": 1,
+      "message": "Ack",
+      "parentUuid": "95e6bfda_0622d5c1",
+      "range": {
+        "startLine": 1717,
+        "startChar": 4,
+        "endLine": 1717,
+        "endChar": 66
+      },
+      "revId": "15e91bcd9004528522a8e31bd80f01fe5a8653fb",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
   ]
 }
