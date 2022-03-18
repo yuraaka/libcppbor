@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "d56474d6_13e8298b",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 1833664
+      },
+      "writtenOn": "2022-03-18T23:26:26Z",
+      "side": 1,
+      "message": "This isn\u0027t a cast, but an `explicit template instantiation`.\n\nAlso, commits should have a short first line, then more description after. Each line should be \u003c 80 characters.\n\nSuggest:\n```\nFix some minor bugs in libcppbor\n\nFix a dangling pointer in ViewBstr test\n\nUse explicit template instantiation for basic_string_view\ninstead of relying on template argument deduction.\n```",
+      "range": {
+        "startLine": 7,
+        "startChar": 47,
+        "endLine": 7,
+        "endChar": 61
+      },
+      "revId": "15e91bcd9004528522a8e31bd80f01fe5a8653fb",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "3c5db829_c1e55ab0",
+        "filename": "tests/cppbor_test.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1717,
+      "author": {
+        "id": 1833664
+      },
+      "writtenOn": "2022-03-18T23:26:26Z",
+      "side": 1,
+      "message": "I don\u0027t think we need this line. This was only for debugging, IIRC.",
+      "range": {
+        "startLine": 1717,
+        "startChar": 4,
+        "endLine": 1717,
+        "endChar": 66
+      },
+      "revId": "15e91bcd9004528522a8e31bd80f01fe5a8653fb",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
