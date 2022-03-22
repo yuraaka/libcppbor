@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "4da19896_c7ac8c13",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1115498
+      },
+      "writtenOn": "2022-03-22T22:44:55Z",
+      "side": 1,
+      "message": "Why not `#ifdef OS_WINDOWS` just to stay consistent with the other `ifdef`\u0027s in here? Also can you comment the condition the `ifdef` is related to in the ending `endif`?\n\nE.g.\n```\n#ifdef OS_WINDOWS\n...\n#endif // OS_WINDOWS",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 30,
+        "endChar": 23
+      },
+      "revId": "a57e79a761d7723a9f0c2b88b2f4c0f2ddd2e340",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
