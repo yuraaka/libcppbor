@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 
@@ -27,13 +28,11 @@ using namespace cppbor;
 using namespace std;
 
 using ::testing::_;
-using ::testing::AllOf;
 using ::testing::ByRef;
 using ::testing::InSequence;
 using ::testing::IsNull;
 using ::testing::NotNull;
 using ::testing::Return;
-using ::testing::Truly;
 using ::testing::Unused;
 
 string hexDump(const string& str) {
@@ -716,7 +715,7 @@ TEST(EqualityTest, ViewBstr) {
 TEST(ConvertTest, Uint) {
     unique_ptr<Item> item = details::makeItem(10);
 
-    EXPECT_EQ(UINT, item->type());
+    EXPECT_EQ(cppbor::UINT, item->type());
     EXPECT_NE(nullptr, item->asInt());
     EXPECT_NE(nullptr, item->asUint());
     EXPECT_EQ(nullptr, item->asNint());
@@ -803,7 +802,7 @@ TEST(ConvertTest, Bool) {
     EXPECT_EQ(nullptr, item->asViewTstr());
     EXPECT_EQ(nullptr, item->asViewBstr());
 
-    EXPECT_EQ(BOOLEAN, item->asSimple()->simpleType());
+    EXPECT_EQ(cppbor::BOOLEAN, item->asSimple()->simpleType());
     EXPECT_NE(nullptr, item->asSimple()->asBool());
     EXPECT_EQ(nullptr, item->asSimple()->asNull());
 
@@ -965,7 +964,7 @@ TEST(ConvertTest, ViewBstr) {
 TEST(CloningTest, Uint) {
     Uint item(10);
     auto clone = item.clone();
-    EXPECT_EQ(clone->type(), UINT);
+    EXPECT_EQ(clone->type(), cppbor::UINT);
     EXPECT_NE(clone->asUint(), nullptr);
     EXPECT_EQ(item, *clone->asUint());
     EXPECT_EQ(*clone->asUint(), Uint(10));
@@ -1025,7 +1024,7 @@ TEST(CloningTest, Bool) {
     auto clone = item.clone();
     EXPECT_EQ(clone->type(), SIMPLE);
     EXPECT_NE(clone->asSimple(), nullptr);
-    EXPECT_EQ(clone->asSimple()->simpleType(), BOOLEAN);
+    EXPECT_EQ(clone->asSimple()->simpleType(), cppbor::BOOLEAN);
     EXPECT_NE(clone->asSimple()->asBool(), nullptr);
     EXPECT_EQ(item, *clone->asSimple()->asBool());
     EXPECT_EQ(*clone->asSimple()->asBool(), Bool(true));
