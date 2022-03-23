@@ -22,6 +22,30 @@
       },
       "revId": "a57e79a761d7723a9f0c2b88b2f4c0f2ddd2e340",
       "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "e6c2ac0f_fd7eb0ef",
+        "filename": "include/cppbor/cppbor.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 1937166
+      },
+      "writtenOn": "2022-03-23T17:37:53Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "4da19896_c7ac8c13",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 30,
+        "endChar": 23
+      },
+      "revId": "a57e79a761d7723a9f0c2b88b2f4c0f2ddd2e340",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
     }
   ]
 }
