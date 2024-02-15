@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "323acc80_4609967f",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1229339
+      },
+      "writtenOn": "2024-02-15T22:04:47Z",
+      "side": 1,
+      "message": "It looks like Trusty is still using the old external/libcxx[abi] from Jan 2019, as well as the deprecated external/libcppbor (instead of system/libcppbor). Trusty has its own build system for libc++, it appears. I\u0027m not planning to upgrade Trusty\u0027s libc++ at the moment, but I suppose it\u0027s reasonable to cherry-pick this change anyway.",
+      "revId": "26bf13cda3412d6b4184f718bc7d30819995f42b",
+      "serverId": "85c56323-6fa9-3386-8a01-6480fb634889"
+    }
+  ]
+}
