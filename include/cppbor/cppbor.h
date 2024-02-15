@@ -16,12 +16,14 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
 #include <iterator>
 #include <memory>
 #include <numeric>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -435,7 +437,7 @@ class Bstr : public Item {
 };
 
 /**
- * ViewBstr is a read-only version of Bstr backed by std::string_view
+ * ViewBstr is a read-only version of Bstr backed by std::span
  */
 class ViewBstr : public Item {
   public:
@@ -444,8 +446,8 @@ class ViewBstr : public Item {
     // Construct an empty ViewBstr
     explicit ViewBstr() {}
 
-    // Construct from a string_view of uint8_t values
-    explicit ViewBstr(std::basic_string_view<uint8_t> v) : mView(std::move(v)) {}
+    // Construct from a span of uint8_t values
+    explicit ViewBstr(std::span<const uint8_t> v) : mView(std::move(v)) {}
 
     // Construct from a string_view
     explicit ViewBstr(std::string_view v)
@@ -461,7 +463,9 @@ class ViewBstr : public Item {
     ViewBstr(const uint8_t* begin, const uint8_t* end)
         : mView(begin, std::distance(begin, end)) {}
 
-    bool operator==(const ViewBstr& other) const& { return mView == other.mView; }
+    bool operator==(const ViewBstr& other) const& {
+      return std::equal(mView.begin(), mView.end(), other.mView.begin(), other.mView.end());
+    }
 
     MajorType type() const override { return kMajorType; }
     using Item::asViewBstr;
@@ -474,14 +478,14 @@ class ViewBstr : public Item {
         encodeValue(encodeCallback);
     }
 
-    const std::basic_string_view<uint8_t>& view() const { return mView; }
+    const std::span<const uint8_t>& view() const { return mView; }
 
     std::unique_ptr<Item> clone() const override { return std::make_unique<ViewBstr>(mView); }
 
   private:
     void encodeValue(EncodeCallback encodeCallback) const;
 
-    std::basic_string_view<uint8_t> mView;
+    std::span<const uint8_t> mView;
 };
 
 /**
